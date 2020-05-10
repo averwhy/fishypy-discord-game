@@ -68,6 +68,16 @@ def grabusers():
     data = c.fetchall()
     for i in data:
         print(i)
+def addusers(authorid,guildid,authorname):
+    c.execute('SELECT * FROM fishyusers')
+    data = c.fetchall()
+    for i in data:
+        if authorid == i[0]:
+            returnmsg = "```\nYou're already in the database.\n```"
+        else:
+            c.execute(f"INSERT INTO fishyusers VALUES ('{authorid}','0','0','0','none','none','{guildid}')")
+            returnmsg = (f"```\nHey {authorname}, ive added you to the database.\n```")
+    return(returnmsg)
 
 @client.event
 async def on_message(message):
@@ -78,16 +88,18 @@ async def on_message(message):
 
     guildid = message.guild.id #guild check
     authorid = message.author.id
+    authorname = message.author.name
+
     if message.content.startswith('!debug'):
         grabusers()
         await message.channel.send("```\nCheck console!\n```")
-    
+        
     if message.content.startswith('!start'):
         c.execute('SELECT * FROM fishyusers')
-
-        c.execute(f"INSERT INTO fishyusers VALUES ('{authorid}','0','0','0','none','none','{guildid}')")
-        await message.channel.send(f"```\nHey {message.author.name}, ive added you to the database.\n```")
+        addusers(authorid,guildid,authorname) #todo: fix this mess
+        msg = addusers()
         conn.commit()
+        await message.channel.send(msg)
 
 @client.event
 async def on_ready():
