@@ -1,5 +1,7 @@
 # Fishy bot for discord #
 
+### THIS BOT IS NOT WRITTEN IN DISCORD.JS!!! ###
+
 ## Info ##
 
 This fork of Fishy discord bot is _being_ rewritten in discord.py, and will use sqlite3 as its database.
