@@ -1,12 +1,12 @@
-## Fishy bot for discord ##
+# Fishy bot for discord #
 
-# info #
+### THIS BOT IS NOT WRITTEN IN DISCORD.JS!!! ###
 
-Fishy uses MongoDB for database and Eris.js for discord library.
+## Info ##
 
-# How to run #
+This fork of Fishy discord bot is _being_ rewritten in discord.py, and will use sqlite3 as its database.
+The original author of this bot is Deda#9999.
 
-- set up your mongo database by importing db files from /db folder
-- fill bot information and settings in config.json file 
-- `npm install`
-- `node server.js`
+## Original Repo ##
+
+https://github.com/DedaDev/fishy-discord-game
