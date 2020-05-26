@@ -2,24 +2,30 @@ import discord
 import aiohttp
 import asyncio
 import time
-import random
+import random, math
 import json
 import re, os, sys
 import sqlite3
 from discord.ext import commands
+#CONFIG#######################################################################################################
+description = '''Fishy.py is an fork of Deda#9999's original Fishy bot. Fishy.py is being rewritten in discord.py API. To see commands use ]cmds.'''
+defaultprefix = "]"
+secondstoReact = 7
+ownersID = 267410788996743168
+fishCaughtInSession = 0
+reviewChannel_id = 711996845764902924
 
 #BOT#PARAMS###################################################################################################
 TOKEN = ''
 userid = '695328763960885269'
-version = '0.0.1'
+version = '0.7'
 myname = "Fishy.py"
-invite = "https://discordapp.com/api/oauth2/authorize?client_id=695328763960885269&permissions=8&scope=bot"
-client = discord.Client()
-
-#CONFIG#######################################################################################################
-defaultprefix = "f:"
-bot = commands.Bot(command_prefix=defaultprefix)
-secondstoReact = 7
+invite = "https://discordapp.com/api/oauth2/authorize?bot_id=695328763960885269&permissions=8&scope=bot"
+bot = commands.Bot(command_prefix=defaultprefix,description=description)
+#bot = discord.bot()
+bot.remove_command('help')
+time_started = time.localtime()
+time.strftime("%Y-%m-%d %H:%M:%S",time_started)
 
 #DB#MANAGEMENT################################################################################################
 if os.path.isfile('fishypy.db'):
@@ -32,16 +38,17 @@ else:
     conn = sqlite3.connect('fishypy.db')
     c = conn.cursor()
     c.execute('''CREATE TABLE fishyusers
-             (userid text, totalcaught text, rodlevel text, userlevel text, trophyname text, trophylength text, guild text, isadmin text)''') #i make them all text so its easier
+             (userid text, totalcaught text, rodlevel text, userlevel text, trophyname text, trophylength text, guild text, hexcolor text, reviewmsgid text)''') #i make them all text so its easier
              # userid = the users id (int)
-             # total caught = total number of fish caught (int)
+             # totalcaught = total number of fish caught (int)
              # rodlevel = the rod level (int)
              # userlevel = that users level (int)
              # trophyname = name of best fish caught (str)
              # trophylength = length of best fish caught (str)[ex: "4.56cm"]
              # guild = the guild the user belongs to (int)
-             # isadmin = if they are a fishy admin NOT SERVER ADMIN (bool)
-    c.execute("INSERT INTO fishyusers VALUES ('267410788996743168','0','0','0','none','none','0','true')") # this is me
+             # hexcolor = the color that appears on their profile embed (str)
+             # reviewmsgid = the id of the review message the user submitted
+    c.execute("INSERT INTO fishyusers VALUES ('267410788996743168','0','0','0','none','none','0','005dff','0')") # this is me
     c.execute('''CREATE TABLE fishyguilds
              (guildid text, guildtotal text, globalpos text, topuser text, guildtrophyname text, guildtrophylength text)''')
              #guildid = the guilds id (int)
@@ -52,128 +59,321 @@ else:
              #guildtrophylength = the guilds trophy fish, length (str)
     c.execute("INSERT INTO fishyguilds VALUES ('695330969527517294','0','267410788996743168','1','none','none')") # this is bot emporium server
     print("Database not found. Necessary values were inserted.")
-conn.commit()
-#c.execute('SELECT * FROM fishy')
-fishy_json = open("C:\\Users\\aver\\Documents\\GitHub\\fishy-discord-game\\fishy.json")
-json_data = json.loads(fishy_json)
 
-helpmsg = """```md
+try: 
+    c.execute('SELECT * FROM fishes')
+except:
+    print("#################################################")
+    print("!!!FATAL ERROR !!!")
+    print("Fishes table is not found!!! This is required for the bot!")
+    print("#################################################")
+    TOKEN = None # so bot cant start
+    print("Token variable was set to None, as the bot cannot start without the fishes database.")
+conn.commit()
+#BOT#CODE#####################################################################################################
+
+helpmsg = f"""```md
 React on message to fish, rods are auto-upgraded
 Compete with others for best collection
 #______COMMANDS______#
-[!fish][to start fishing] < WIP >
-[!profile][player profile, rod level, trophy]
-[!top (guilds,users)][Leaderboards] < WIP >
-[!prefix][changing bot prefix for server(admins only)] < WIP >
-[!info][info and stats about bot] < WIP >
-[!invite][invite bot to your discord server] < WIP >
-[!myguild][change the guild you belong to] < WIP >
-[!help][show this message]
+<default prefix="{defaultprefix}">
+[fish][to start fishing]
+[profile][player profile, rod level, trophy, total caught]
+[top (guilds,users)][Leaderboards] < WIP >
+[info][info and stats about bot]
+[invite][invite bot to your discord server] < WIP >
+[myguild][change the guild you belong to] < WIP >
+[profilecolor][change the embed color]
+[cmds][show this message]
 ```"""
 
-def grabusers():
-    c.execute('SELECT * FROM fishyusers')
-    data = c.fetchall()
-    for i in data:
-        print(i)
+def usercheck(authorid):
+    c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
+    data = c.fetchone()
+    if data is not None:
+        return True
+    else:
+        return False
 
+def fish_success_update(authorid,guildid):
+    global fishCaughtInSession
+    updatevalue = None
+    c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
+    data = c.fetchone()
+    data = list(data)
+    updatevalue = int(data[1])
+    updatevalue += 1
+    str(updatevalue)
+    c.execute(f"Update fishyusers set totalcaught = {updatevalue} where userid = {authorid}")
+    c.execute(f'SELECT * FROM fishyguilds WHERE guildid = {guildid}')
+    data = c.fetchone()
+    data = list(data)
+    updatevalue = int(data[1])
+    updatevalue += 1
+    str(updatevalue)
+    c.execute(f"Update fishyguilds set guildtotal = {updatevalue} where guildid = {guildid}")
+    conn.commit()
+    fishCaughtInSession += 1
+
+def rodmath(authorid):
+    c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
+    data = c.fetchone()
+    
+    
+def deluser(authorid,idtoremove):
+    print(authorid,"and",ownersID)
+    if int(authorid) == int(ownersID):
+        try:
+            c.execute(f"DELETE FROM fishyusers WHERE userid = {idtoremove}")
+            theirusername = bot.get_user(idtoremove)
+            return f"`The user, {theirusername}, was removed from the database.`"
+        except:
+            return "`Something went wrong. That user might not be in the database, or there was another error.`"
+    else:
+        return "`ERROR: Missing permissions.`"
 
 def addusers(authorid,guildid,authorname):
-    c.execute('SELECT * FROM fishyusers')
-    data = c.fetchall()
-    authorid = int(authorid)
-    founduser = False
-    # idtofetch = c.execute(f"SELECT userid FROM fishyusers WHERE userid = {authorid}")
-    # returnmsg = idtofetch
-    for i in data:
-        idtocheck = int(i[0])
-        print(idtocheck,"and",authorid)
-        if authorid == idtocheck:
-            returnmsg = "`You're already in the database.`"
-            founduser = True
-            break
-
-    else:    
-        c.execute(f"INSERT INTO fishyusers VALUES ('{authorid}','0','0','0','none','none','{guildid}','false')")
+    c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
+    data = c.fetchone()
+    if data is not None:
+        return (f"`You're already in the database, {authorname}`")
+    else:
+        c.execute(f"INSERT INTO fishyusers VALUES ('{authorid}','0','0','0','none','none','{guildid}','005dff','0')")
         returnmsg = (f"`Hey {authorname}, ive added you to the database.`")
         conn.commit()
 
     return(returnmsg)
 
 def getprofile(authorid,guildid,authorname):
-    c.execute('SELECT * FROM fishyusers')
-    data = c.fetchall()
+    c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
+    data = c.fetchone()
     authorid = int(authorid)
-    for i in data:
+    print(data)
+    if data is not None:
+        i = list(data)
         idtocheck = int(i[0])
-        print(idtocheck,"and",authorid)
-        if authorid == idtocheck:
-            list_to_return = []
-            list_to_return.append(i[0])
-            list_to_return.append(i[1])
-            list_to_return.append(i[2])
-            list_to_return.append(i[3])
-            list_to_return.append(i[4])
-            list_to_return.append(i[5])
-            list_to_return.append(i[6])
-            print(list_to_return)
+        list_to_return = []
+        list_to_return.append(i[0])
+        list_to_return.append(i[1])
+        list_to_return.append(i[2])
+        list_to_return.append(i[3])
+        list_to_return.append(i[4])
+        list_to_return.append(i[5])
+        list_to_return.append(i[6])
+        print(list_to_return[6])
+        return list_to_return
     else:
-        returnmsg = "`I was unable to retrieve your profile. Have you done !start yet?"
-        
-    return(list_to_return)
+        return False #because they dont exist
 
-@client.event
-async def on_message(message):
+def fishing(authorid,guildid,authorname):
+    c.execute('SELECT * FROM fishes ORDER BY RANDOM() LIMIT 1;')
+    data = c.fetchone()
+    print(data)
+    data = list(data)
+    # list_to_return = []
+    # list_to_return.append()
+    list_to_return = []
+    list_to_return.append(data[0]) #oid - 0 
+    list_to_return.append(data[1]) #link (url) - 1
+    list_to_return.append(data[2]) #rarity - 2
+    list_to_return.append(data[3]) #id - 3
+    list_to_return.append(data[6]) #length - 4
+    list_to_return.append(data[5]) #name - 5
+    return list_to_return
 
-    ts = time.gmtime()
-    data = c.fetchall()
-    conn.commit()
+# @bot.event
+# async def on_command_error(ctx, error):
+#     embed = discord.Embed(title="An error has occured!", description=f"{error}", colour=discord.Colour(0xfcd703))
+#     embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
+#     await asyncio.sleep(0.1)
+#     msgtoedit = await ctx.send(embed=embed)
 
-    if message.content.startswith(f'{defaultprefix}debug'):
-        if message.author.id == 267410788996743168:
-            grabusers()
-            await message.channel.send(content=(f"`Check console`"))
+@bot.command()
+async def fish(ctx):
+    channel = ctx.message.channel
+    authorid = ctx.message.author.id
+    authorname = ctx.message.author.name
+    guildid = ctx.message.guild.id 
+    guildname = ctx.message.guild.name
+    checkuser = usercheck(authorid)
+    if checkuser == False:
+        await ctx.send("`I was unable to retrieve your profile. Have you done ]start yet?`")
+    else:
+        embed = discord.Embed(title=f"**React to fish!**", description="", colour=discord.Colour(0x000000))
+        embed.set_footer(text=f"Fishy.py - {version} | Requested by {authorname}",icon_url=(bot.user.avatar_url))
+        msgtoedit = await ctx.send(embed=embed)
+        await msgtoedit.add_reaction(emoji="\U0001f41f") # fish emoji
+        await msgtoedit.add_reaction(emoji="\U0001f419") # octopus
+        await msgtoedit.add_reaction(emoji="\U0001f420") # tropical fish
+        reactionList = ["\U0001f41f","\U0001f419","\U0001f420"]
+        def check(reaction, user):
+            return user == ctx.message.author and str(reaction.emoji) in reactionList
+        try:
+            reaction, user = await bot.wait_for('reaction_add', timeout=secondstoReact, check=check)
+        except asyncio.TimeoutError:
+            pass
         else:
-            await message.channel.send(content="`Insufficent permission`")
+            returnedlist = fishing(authorid,guildid,authorname)
+            fish_success_update(authorid,guildid)
+            print(returnedlist)
+            embed = discord.Embed(title=f"**{returnedlist[5]}**", description="", colour=discord.Colour(0x7a19fd))
+            embed.set_footer(text=f"Fishy.py - {version} | Requested by {authorname}",icon_url=(bot.user.avatar_url))
+            embed.add_field(name="Rarity", value=f"{returnedlist[2]}", inline=False)
+            embed.add_field(name="Length", value=f"{returnedlist[4]}cm", inline=False)
+            embed.add_field(name="# in database", value=f"{returnedlist[3]}/16205 fishes", inline=False)
+            embed.set_image(url=returnedlist[1])
+            await msgtoedit.clear_reactions()
+            await asyncio.sleep(0.1)
+            await msgtoedit.edit(embed=embed)
+
+@bot.command()
+async def removeuser(ctx,idtoremove):
+    authorid = ctx.message.author.id
+    ylist = ["Y","yes","Yes","y","yEs"]
+
+    idtoremove = int(idtoremove)
+    userfromarg = bot.get_user(idtoremove)
+    await ctx.send(f"`Are you sure you want to remove {userfromarg}({idtoremove}) from the database? [Respond with Y]` ```diff\n- THIS DATA IS NOT RECOVERABLE. YOU WILL LOSE IT PERMANENTLY! -\n```")
         
-    if message.content.startswith(f'{defaultprefix}start'):
-        authorid = message.author.id
-        authorname = message.author.name
-        guildid = message.guild.id #guild check
-        msgtoedit = await message.channel.send("`Please wait...`")
-        c.execute('SELECT * FROM fishyusers')
-        returnedmsg = addusers(authorid,guildid,authorname)
-        await asyncio.sleep(1)
-        await msgtoedit.edit(content=(returnedmsg))
-        conn.commit()
-    
-    if message.content.startswith(f'{defaultprefix}profile'):
-        authorid = message.author.id
-        authorname = message.author.name
-        guildid = message.guild.id #guild check
-        guildname = message.guild.name
+    def check(m):
+        return m.content in ylist and m.channel == ctx.message.channel
+    msg = await bot.wait_for('message', timeout=secondstoReact,check=check)
+    returnedmsg = deluser(authorid,idtoremove)
+    await ctx.send(returnedmsg)
+
+
+@bot.command()
+async def help(ctx):
+    await ctx.send(helpmsg)
+
+@bot.command()
+async def funnypicture(ctx):
+    await ctx.send("https://cdn.discordapp.com/attachments/615010360348639243/702892395347312703/unknown.png")
+
+@bot.command()
+async def profile(ctx):
+    authorid = ctx.message.author.id
+    authorname = ctx.message.author.name
+    guildid = ctx.message.guild.id 
+    guildname = ctx.message.guild.name
+    checkuser = usercheck(authorid)
+    if checkuser is not False:
         returnedlist = getprofile(authorid,guildid,authorname)
-        
+        theirguildid = int(returnedlist[6])
+        print(theirguildid)
+        returnedusersguild = bot.get_guild(theirguildid)
+
         embed = discord.Embed(title=f"**User Profile**", description="", colour=discord.Colour(0x7a19fd))
         embed.set_author(name=f"{authorname}")
-        embed.set_footer(text=f"Fishy.py - {version}",icon_url=(message.author.avatar_url))
+        embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
         embed.add_field(name="Total fish caught", value=f"{returnedlist[1]}", inline=False)
         embed.add_field(name="Rod level", value=f"{returnedlist[2]}", inline=False)
         embed.add_field(name="User level", value=f"{returnedlist[3]}", inline=False)
         embed.add_field(name="Trophy", value=f"{returnedlist[4]}", inline=False)
-        await message.channel.send(embed=embed)
-    
-    if message.content.startswith('!help'):
-        await message.channel.send(helpmsg)
+        embed.add_field(name="Guild", value=f"{returnedusersguild}({returnedlist[6]})", inline=False)
+        embed.set_image(url=ctx.message.author.avatar_url)
+        await ctx.send(embed=embed)
 
-@client.event
+@bot.command()
+async def profilecolor(ctx,hexcolor):
+    authorid = ctx.message.author.id
+    checkuser = usercheck(authorid)
+    hexcolor = "0x"+hexcolor
+    print(hexcolor)
+    checkuser = usercheck(authorid)
+    if checkuser == False:
+        await ctx.send("`I was unable to retrieve your profile. Have you done ]start yet?`")
+    else:
+        try:
+            embed = discord.Embed(title="<-- Theres a preview of your chosen color!", description=f"Are you sure you would like to change your profile color to hex value {hexcolor}?", colour=discord.Colour(hexcolor))
+            askmessage = await ctx.send(embed=embed)
+            await askmessage.add_reaction(emoji="\U00002705") # white check mark
+
+            def check(reaction, user):
+                return user == ctx.message.author and str(reaction.emoji) == "\U00002705"
+            try:
+                reaction, user = await bot.wait_for('reaction_add', timeout=secondstoReact, check=check)
+            except asyncio.TimeoutError:
+                pass
+            else:
+                await ctx.send(f"`Success! Do {defaultprefix}profile to see your new profile color.`")
+        except:
+            embed = discord.Embed(title="An error has occured!", description=f"Please input a valid hex value. See [this color picker](https://htmlcolorcodes.com/color-picker/) if you need help.", colour=discord.Colour(0xfcd703))
+            embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
+            msgtoedit = await ctx.send(embed=embed)
+
+@bot.command()
+async def start(ctx):
+    authorid = ctx.message.author.id
+    authorname = ctx.message.author.name
+    guildid = ctx.message.guild.id 
+    guildname = ctx.message.guild.name
+    msgtoedit = await ctx.send("`Please wait...`")
+    returnedmsg = addusers(authorid,guildid,authorname)
+    await asyncio.sleep(0.2)
+    await msgtoedit.edit(content=(returnedmsg))
+    conn.commit()
+
+@bot.command()
+async def debug(ctx):
+    authorid = ctx.message.author.id
+    c.execute("SELECT * FROM fishyusers")
+    data = c.fetchall()
+    for i in data:
+        print(i)
+    await ctx.send("`Check console`")
+
+@bot.command()
+async def review(ctx, *, reviewtext):
+    authorid = ctx.message.author.id
+    authorname = ctx.message.author.id
+    reviewchannel = bot.get_channel(reviewChannel_id)
+    askmessage = await ctx.send("`Are you sure you would like to submit your review?`")
+    await askmessage.add_reaction(emoji="\U00002705") # white check mark
+    def check(reaction, user):
+        return user == ctx.message.author and str(reaction.emoji) == "\U00002705"
+    try:
+        reaction, user = await bot.wait_for('reaction_add', timeout=secondstoReact, check=check)
+    except asyncio.TimeoutError:
+        pass
+    else:
+        c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
+        data = c.fetchone()
+        data = list(data)
+        storedid = int(data[8])
+        if storedid != 0:
+            msgtoedit = bot.fetch_message(storedid)
+            await msgtoedit.edit(f"`Heres a review from {authorname}({authorid}):```\n{reviewtext}```")
+            await ctx.send(f"`Success! You've edited your review. If you think this was a mistake, and it shouldnt sent a message, please submit a issue on my github repo. The link can be found using {defaultprefix}info`")
+        thereview = await reviewchannel.send(f"`Heres a review from {authorname}({authorid}):` ```\n{reviewtext}```")
+        c.execute(f"Update fishyusers set reviewmsgid = {str(thereview)} where userid = {str(authorid)}")
+        conn.commit()
+        await ctx.send(f"`Success! You can edit your review at any time using this command.`")
+
+@bot.command()
+async def info(ctx):
+    ping = bot.latency * 1000
+    authorid = ctx.message.author.id
+    authorname = ctx.message.author.name
+    guildid = ctx.message.guild.id 
+    guildname = ctx.message.guild.name
+    embed = discord.Embed(title=f"**Info**", description="", colour=discord.Colour(0x158b94))
+    embed.set_author(name=f"Requested by {authorname}")
+    embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
+    embed.add_field(name="Time started", value=time.strftime("%Y-%m-%d %H:%M:%S",time_started), inline=False)
+    embed.add_field(name="Fish caught since start", value=f"{fishCaughtInSession}", inline=False)
+    embed.add_field(name="Ping", value=f"{ping}", inline=False)
+    embed.add_field(name="Github link", value="https://github.com/averwhy/fishy-discord-game", inline=False)
+    await ctx.send(embed=embed)
+
+@bot.event
 async def on_ready():
     print('------------------------------------------------')
     print('Logged in as:')
-    print(client.user.name)
-    print(client.user.id)
+    print(bot.user.name)
+    print(bot.user.id)
     print('------------------------------------------------')
     print(myname, version,"is connected and running")
     print('------------------------------------------------')
 
-client.run(TOKEN)
+bot.run(TOKEN)
