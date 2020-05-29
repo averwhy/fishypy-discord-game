@@ -1,4 +1,4 @@
-# Fishy bot for discord #
+# Fishy.py - Bot for Discord #
 
 ### THIS BOT IS NOT WRITTEN IN DISCORD.JS!!! ###
 
