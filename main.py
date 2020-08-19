@@ -13,6 +13,7 @@ defaultprefix = "]"
 secondstoReact = 7
 ownersID = 267410788996743168
 fishCaughtInSession = 0
+xpGainedinsession = 0
 reviewChannel_id = 735206051703423036
 
 #BOT#PARAMS###################################################################################################
@@ -39,7 +40,7 @@ else:
     c = conn.cursor()
     
     c.execute('''CREATE TABLE fishyusers
-             (userid text, totalcaught text, Level text, rank text, trophyoid text, guild text, hexcolor text, reviewmsgid text)''') #i make them all text so its easier
+             (userid text, totalcaught text, Level text, rank text, trophyoid text, guild text, hexcolor text, reviewmsgid text, previouslevel text)''') #i make them all text so its easier
              # userid = the users id (int)
              # totalcaught = total number of fish caught (int)
              # Level = the Level (int)
@@ -48,7 +49,7 @@ else:
              # guild = the guild id the user belongs to (int)
              # hexcolor = the color that appears on their profile embed (str)
              # reviewmsgid = the id of the review message the user submitted
-    c.execute("INSERT INTO fishyusers VALUES ('267410788996743168','0','0.00','0','none','0','005dff','0')") # this is me
+    c.execute("INSERT INTO fishyusers VALUES ('267410788996743168','0','0.00','0','none','0','005dff','0','0.0')") # this is me
     c.execute('''CREATE TABLE fishyguilds
              (guildid text, guildtotal text, globalpos text, topuser text, guildtrophyoid text)''')
              #guildid = the guilds id (int)
@@ -85,7 +86,7 @@ Compete with others for best collection
 [invite][invite bot to your discord server] < WIP >
 [myguild][change the guild you belong to] < WIP >
 [profilecolor][change the embed color of your profile - TEMPORARILY DISABLED]
-[server][join the fishy.py discord server]
+[support][join the fishy.py discord server]
 [help][show this message]
 ```"""
 
@@ -98,12 +99,26 @@ def usercheck(authorid):
     else:
         return True
 
-def fish_success_update(authorid,guildid):
+def fish_success_update(authorid,guildid,rarity):
     global fishCaughtInSession
+    global xpGainedinsession
+
     updatevalue = None
     c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
     data = c.fetchone()
     data = list(data)
+    #level updates
+    theirlevel = data[2]
+    rarity = float(rarity)
+    theirlevel = float(theirlevel)
+    xptoadd = rarity / 100.0
+    updatevalue = theirlevel + xptoadd
+    str(updatevalue)
+    c.execute(f"Update fishyusers set Level = {updatevalue} where userid = {authorid}")
+    xptoadd = int(xptoadd)
+    xpGainedinsession += xptoadd
+    updatevalue = None
+
     updatevalue = int(data[1])
     updatevalue += 1
     str(updatevalue)
@@ -128,8 +143,8 @@ def rodmath(authorid):
     c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
     data = c.fetchone()
     rodlvl = data[2]
-    def rodUpgradebar(rodLvl):
-        return f"{'#' * (decimal := round(rodLvl % 1 * 40))}{'_' * (40 - decimal)}"
+def rodUpgradebar(rodLvl):
+    return f"{'#' * (decimal := round(rodLvl % 1 * 40))}{'_' * (40 - decimal)}"
     returned_upgradeBar = rodUpgradebar(rodlvl)
     #print(returned_upgradeBar)
     
@@ -178,21 +193,21 @@ def fishing(authorid,guildid,authorname):
     data = list(data)
     return data
 
-@bot.event
-async def on_command_error(ctx, error):
+# @bot.event
+# async def on_command_error(ctx, error):
     
-    if isinstance(error, discord.ext.commands.errors.CommandNotFound):
-        await ctx.message.add_reaction("\U00002753") # red question mark
-        checkuser = usercheck(ctx.message.author.id)
-        if checkuser == False:
-            await ctx.message.author.send(f"Hey there! I couldnt recognize that command. Maybe try using `{defaultprefix}help` instead? **Note: this message is only sent to users absent in the database.*")
-    else:
-        errorchannel = await bot.fetch_channel(741848294581600337)
-        embed = discord.Embed(title="An error has occured!", description=f"{error}", colour=discord.Colour(0xfcd703))
-        embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
-        await asyncio.sleep(0.1)
-        await ctx.send(embed=embed)
-        await errorchannel.send(embed=embed)
+#     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
+#         await ctx.message.add_reaction("\U00002753") # red question mark
+#         checkuser = usercheck(ctx.message.author.id)
+#         if checkuser == False:
+#             await ctx.message.author.send(f"Hey there! I couldnt recognize that command. Maybe try using `{defaultprefix}help` instead? **Note: this message is only sent to users absent in the database.*")
+#     else:
+#         errorchannel = await bot.fetch_channel(741848294581600337)
+#         embed = discord.Embed(title="An error has occured!", description=f"{error}", colour=discord.Colour(0xfcd703))
+#         embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
+#         await asyncio.sleep(0.1)
+#         await ctx.send(embed=embed)
+#         await errorchannel.send(embed=embed)
 
 
 @bot.command()
@@ -221,7 +236,8 @@ async def fish(ctx):
             pass
         else:
             returnedlist = fishing(authorid,guildid,authorname)
-            fish_success_update(authorid,guildid)
+            rarity = returnedlist[2]
+            fish_success_update(authorid,guildid,rarity)
             ##print(returnedlist)
             embed = discord.Embed(title=f"**{returnedlist[5]}**", description="", colour=discord.Colour(0x7a19fd))
             embed.set_footer(text=f"Fishy.py - {version} | Requested by {authorname}",icon_url=(bot.user.avatar_url))
@@ -235,7 +251,7 @@ async def fish(ctx):
     conn.commit()
 
 @bot.command()
-async def server(ctx):
+async def support(ctx):
     await ctx.send("`The support server's invite link is` http://discord.gg/HSqevex")
 
 @bot.command()
@@ -288,13 +304,19 @@ async def profile(ctx):
         #print(theirguildid)
         returnedusersguild = bot.get_guild(theirguildid)
 
-        embed = discord.Embed(title=f"**User Profile**", description="", colour=discord.Colour(0x7a19fd))
-        embed.set_author(name=f"{authorname}")
+        embed = discord.Embed(title=f"**{authorname}**", description=f"*ID:{authorid}*", colour=discord.Colour(0x7a19fd))
+        embed.set_author(name=f"User profile")
         embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
         embed.add_field(name="Total fish caught", value=f"{returnedlist[1]}", inline=False)
-        embed.add_field(name="User Level", value=f"{returnedlist[2]}", inline=False)
+        users_levelandxp = returnedlist[2]
+        users_levelandxp = float(users_levelandxp)
+        levelmath = divmod(users_levelandxp,1)
+        print(levelmath)
+        user_level = levelmath[0]
+        embed.add_field(name="User Level", value=f"{int(user_level)}", inline=False)
+        embed.add_field(name="XP",value=f"{levelmath[1]}",inline=False)
         embed.add_field(name="Trophy", value=f"{returnedlist[4]}", inline=False)
-        embed.add_field(name="Guild", value=f"{returnedusersguild}({returnedlist[5]})", inline=False)
+        embed.add_field(name="Guild", value=f"{returnedusersguild} (ID:{returnedlist[5]})", inline=False)
         embed.set_thumbnail(url=ctx.message.author.avatar_url)
         await ctx.send(embed=embed)
     conn.commit()
@@ -343,12 +365,14 @@ async def start(ctx):
 @bot.command()
 async def debug(ctx):
     authorid = ctx.message.author.id
-    c.execute("SELECT * FROM fishyusers")
-    data = c.fetchall()
-    for i in data:
-        print(i)
-    await ctx.send("`Check console`")
-
+    if int(authorid) == int(ownersID):
+        c.execute(f"SELECT * FROM fishyusers")
+        data = c.fetchall()
+        await ctx.send(f"`{data}`")
+        conn.commit()
+    else:
+        return "`ERROR: Missing permissions.`"
+    authorid = ctx.message.author.id
 @bot.command()
 async def review(ctx, *, reviewtext):
     authorid = ctx.message.author.id
@@ -388,6 +412,7 @@ async def info(ctx):
     embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
     embed.add_field(name="Time started", value=time.strftime("%m-%d-%Y, %I:%M:%S EST",time_started), inline=False)
     embed.add_field(name="Fish caught since start", value=f"{fishCaughtInSession}", inline=False)
+    embed.add_field(name="XP Gained in session",value = f"{xpGainedinsession}", inline=False)
     embed.add_field(name="Ping", value=f"{ping}", inline=False)
     embed.add_field(name="Github link", value="https://github.com/averwhy/fishy-discord-game", inline=False)
     await ctx.send(embed=embed)
