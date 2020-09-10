@@ -40,7 +40,7 @@ else:
     c = conn.cursor()
     
     c.execute('''CREATE TABLE fishyusers
-             (userid text, totalcaught text, Level text, rank text, trophyoid text, guild text, hexcolor text, reviewmsgid text, previouslevel text)''') #i make them all text so its easier
+             (userid text, totalcaught text, Level text, rank text, trophyoid text, guild text, hexcolor text, reviewmsgid text)''') #i make them all text so its easier
              # userid = the users id (int)
              # totalcaught = total number of fish caught (int)
              # Level = the Level (int)
@@ -49,7 +49,8 @@ else:
              # guild = the guild id the user belongs to (int)
              # hexcolor = the color that appears on their profile embed (str)
              # reviewmsgid = the id of the review message the user submitted
-    c.execute("INSERT INTO fishyusers VALUES ('267410788996743168','0','0.00','0','none','0','005dff','0','0.0')") # this is me
+    c.execute("INSERT INTO fishyusers VALUES ('267410788996743168','0','0.00','0','none','0','005dff','0')") # this is me
+
     c.execute('''CREATE TABLE fishyguilds
              (guildid text, guildtotal text, globalpos text, topuser text, guildtrophyoid text)''')
              #guildid = the guilds id (int)
@@ -69,8 +70,8 @@ except:
     print("!!!FATAL ERROR !!!")
     print("Fishes table is not found!!! This is required for the bot!")
     print("#################################################")
-    #TOKEN = None # so bot cant start
-    ##print("Token variable was set to None, as the bot cannot start without the fishes database.")
+    TOKEN = None # so bot cant start
+    #print("Token variable was set to None, as the bot cannot start without the fishes database.")
 conn.commit()
 #BOT#CODE#####################################################################################################
 
@@ -115,6 +116,14 @@ def fish_success_update(authorid,guildid,rarity):
     updatevalue = theirlevel + xptoadd
     str(updatevalue)
     c.execute(f"Update fishyusers set Level = {updatevalue} where userid = {authorid}")
+
+    theirlevel = divmod(theirlevel,1)
+    levelonly = theirlevel[0]
+    newlevel = divmod(updatevalue,1)
+    newlevelint = newlevel[0]
+    if int(newlevelint) > int(levelonly):
+        return True
+
     xptoadd = int(xptoadd)
     xpGainedinsession += xptoadd
     updatevalue = None
@@ -143,8 +152,8 @@ def rodmath(authorid):
     c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
     data = c.fetchone()
     rodlvl = data[2]
-def rodUpgradebar(rodLvl):
-    return f"{'#' * (decimal := round(rodLvl % 1 * 40))}{'_' * (40 - decimal)}"
+def rodUpgradebar(rodlvl):
+    return f"{'#' * (decimal := round(rodlvl % 1 * 40))}{'_' * (40 - decimal)}"
     returned_upgradeBar = rodUpgradebar(rodlvl)
     #print(returned_upgradeBar)
     
@@ -174,7 +183,8 @@ def addusers(authorid,guildid,guildname,authorname):
     if data is None:
         print("the guild doesnt exist, so i shall add to database aswell")
         c.execute(f"INSERT INTO fishyguilds VALUES ('{guildid}','0','0','none','none')")
-    return(returnmsg)
+        conn.commit()
+    return returnmsg
 
 def getprofile(authorid,guildid,authorname):
     c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
@@ -186,6 +196,12 @@ def getprofile(authorid,guildid,authorname):
     else:
         return False #because they dont exist
 
+def levelupcheck(authorid,lastxp):
+    #ONLY SHOULD BE USED IF USERCHECK IS TRUE
+    c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
+    data = c.fetchone()
+    authorid = int(authorid)
+
 def fishing(authorid,guildid,authorname):
     c.execute('SELECT * FROM fishes ORDER BY RANDOM() LIMIT 1;')
     data = c.fetchone()
@@ -193,22 +209,25 @@ def fishing(authorid,guildid,authorname):
     data = list(data)
     return data
 
-# @bot.event
-# async def on_command_error(ctx, error):
+@bot.event
+async def on_command_error(ctx, error):
     
-#     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
-#         await ctx.message.add_reaction("\U00002753") # red question mark
-#         checkuser = usercheck(ctx.message.author.id)
-#         if checkuser == False:
-#             await ctx.message.author.send(f"Hey there! I couldnt recognize that command. Maybe try using `{defaultprefix}help` instead? **Note: this message is only sent to users absent in the database.*")
-#     else:
-#         errorchannel = await bot.fetch_channel(741848294581600337)
-#         embed = discord.Embed(title="An error has occured!", description=f"{error}", colour=discord.Colour(0xfcd703))
-#         embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
-#         await asyncio.sleep(0.1)
-#         await ctx.send(embed=embed)
-#         await errorchannel.send(embed=embed)
+    if isinstance(error, discord.ext.commands.errors.CommandNotFound):
+        await ctx.message.add_reaction("\U00002753") # red question mark
+        checkuser = usercheck(ctx.message.author.id)
+        if checkuser == False:
+            await ctx.message.author.send(f"Hey there! I couldnt recognize that command. Maybe try using `{defaultprefix}help` instead? **Note: this message is only sent to users absent in the database.*")
+    else:
+        errorchannel = await bot.fetch_channel(741848294581600337)
+        embed = discord.Embed(title="An error has occured!", description=f"{error}", colour=discord.Colour(0xfcd703))
+        embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
+        await asyncio.sleep(0.1)
+        await ctx.send(embed=embed)
+        await errorchannel.send(embed=embed)
 
+@bot.command()
+async def top(ctx,type):
+    await ctx.send(f"`Sorry {ctx.author.name}, this command isnt avaliable yet.`")
 
 @bot.command()
 async def fish(ctx):
@@ -237,17 +256,33 @@ async def fish(ctx):
         else:
             returnedlist = fishing(authorid,guildid,authorname)
             rarity = returnedlist[2]
-            fish_success_update(authorid,guildid,rarity)
+            lvl_up_bool = fish_success_update(authorid,guildid,rarity)
+            if lvl_up_bool is not None:
+                await ctx.send(f"`Hey `{ctx.author.mention}`, you leveled up!! Congrats!`")
             ##print(returnedlist)
+            xp = float(returnedlist[2])
+            xp2 = xp/100
             embed = discord.Embed(title=f"**{returnedlist[5]}**", description="", colour=discord.Colour(0x7a19fd))
             embed.set_footer(text=f"Fishy.py - {version} | Requested by {authorname}",icon_url=(bot.user.avatar_url))
-            embed.add_field(name="Rarity", value=f"{returnedlist[2]}", inline=False)
+            embed.add_field(name="XP Gained", value=f"{xp2}", inline=False)
+            raritycalc = float(returnedlist[2])
+            raritycalc2 = None
+            if raritycalc > 0.8:
+                raritycalc2 = "Legendary"
+            if raritycalc > 0.6:
+                raritycalc2 = "Rare"
+            if raritycalc > 0.55:
+                raritycalc2 = "Uncommon"
+            if raritycalc > 0:
+                raritycalc2 = "Common"
+            embed.add_field(name="Rarity",value=f"{raritycalc2} ({returnedlist[2]})",inline=False)
             embed.add_field(name="Length", value=f"{returnedlist[4]}cm", inline=False)
             embed.add_field(name="# in database", value=f"{returnedlist[3]}/16205 fishes", inline=False)
             embed.set_image(url=returnedlist[1])
             await msgtoedit.clear_reactions()
             await asyncio.sleep(0.1)
             await msgtoedit.edit(embed=embed)
+            
     conn.commit()
 
 @bot.command()
@@ -268,6 +303,37 @@ async def removeuser(ctx,idtoremove):
     returnedmsg = deluser(authorid,idtoremove)
     await ctx.send(returnedmsg)
     conn.commit()
+
+@bot.command()
+async def setvalue(ctx, idtomodify, valuetomodify, newvalue):
+    if ctx.message.author.id == 267410788996743168:
+        authorid = ctx.message.author.id
+        idtomodify = int(idtomodify)
+        try:
+            c.execute(f'SELECT * FROM fishyusers WHERE userid = {idtomodify}')
+            beforedata = c.fetchone()
+            c.execute(f"Update fishyusers set {valuetomodify} = {newvalue} where userid = {idtomodify}")
+            c.execute(f'SELECT * FROM fishyusers WHERE userid = {idtomodify}')
+            afterdata = c.fetchone()
+            await ctx.send(f"`Looks like that worked.\nOld values: {beforedata}\nNew values: {afterdata}`")
+            conn.commit()
+        except:
+            allowedthings = """```
+            userid = the users id (int)
+            totalcaught = total number of fish caught (int)
+            Level = the Level (int)
+            trophyname = name of best fish caught (str)
+            trophylength = length of best fish caught (str)[ex: "4.56cm"]
+            guild = the guild id the user belongs to (int)
+            hexcolor = the color that appears on their profile embed (str)
+            reviewmsgid = the id of the review message the user submitted
+            """
+            await ctx.send(f"`Something went wrong! Valid values to modify:\n{allowedthings}")
+            conn.commit()
+    else:
+        await ctx.send("`Insufficent permission.`")
+        print(f"{ctx.message.author.name}({ctx.message.author.id}) tried to use ]setvalue in guild {ctx.message.guild.name}({ctx.message.guild.id})!")
+        conn.commit()
 
 @bot.command()
 async def addguild(ctx):
@@ -319,6 +385,8 @@ async def profile(ctx):
         embed.add_field(name="Guild", value=f"{returnedusersguild} (ID:{returnedlist[5]})", inline=False)
         embed.set_thumbnail(url=ctx.message.author.avatar_url)
         await ctx.send(embed=embed)
+    else:
+        await ctx.send("`I was unable to retrieve your profile. Have you done ]start yet?`")
     conn.commit()
 
 # @bot.command()

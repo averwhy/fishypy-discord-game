@@ -1,4 +1,4 @@
-"""
+""" this is js btw
     rodUpgradeBar : function(rodLvl){ // returns a string
         let decimal = Math.round((rodLvl % 1)*10)
         let arrayBar = Array(10).fill("##",0,decimal)
