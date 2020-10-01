@@ -93,7 +93,7 @@ Compete with others for best collection
 [help][show this message]
 ```"""
 
-def usercheck(authorid):
+def usercheck(authorid): # this function checks if the user exists in the DB
     c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
     data = c.fetchone()
     #print(data)
@@ -102,7 +102,7 @@ def usercheck(authorid):
     else:
         return True
 
-def fish_success_update(authorid,guildid,rarity):
+def fish_success_update(authorid,guildid,rarity): # this runs when the user fishes (successfully)
     global fishCaughtInSession
     global xpGainedinsession
 
@@ -147,19 +147,19 @@ def fish_success_update(authorid,guildid,rarity):
     conn.commit()
     fishCaughtInSession += 1
 
-def rodmath(authorid):
+def rodmath(authorid): # this is not used YET, but i plan on doing this
     # what i plan for this so far is:
     # 1. the integer is their Level.
     # 2. the decimal part of this is their xp. this has a direct effect the progress bar
     c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
     data = c.fetchone()
     rodlvl = data[2]
-def rodUpgradebar(rodlvl):
+def rodUpgradebar(rodlvl): # this is the same situation rodmath()
     return f"{'#' * (decimal := round(rodlvl % 1 * 40))}{'_' * (40 - decimal)}"
     returned_upgradeBar = rodUpgradebar(rodlvl)
     #print(returned_upgradeBar)
     
-def deluser(authorid,idtoremove):
+def deluser(authorid,idtoremove): # this deletes an user from the DB
     ##print(authorid,"and",ownersID)
     if int(authorid) == int(ownersID):
         try:
@@ -171,7 +171,7 @@ def deluser(authorid,idtoremove):
     else:
         return "`ERROR: Missing permissions.`"
 
-def addusers(authorid,guildid,guildname,authorname):
+def addusers(authorid,guildid,guildname,authorname): # this adds users to the DB. runs when start command is called
     c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
     data = c.fetchone()
     if data is not None:
@@ -189,7 +189,7 @@ def addusers(authorid,guildid,guildname,authorname):
         conn.commit()
     return returnmsg
 
-def getprofile(authorid,guildid,authorname):
+def getprofile(authorid,guildid,authorname): # this gets an user from the db, and returns a list with all their data
     c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
     data = c.fetchone()
     authorid = int(authorid)
@@ -199,7 +199,7 @@ def getprofile(authorid,guildid,authorname):
     else:
         return False #because they dont exist
 
-def levelupcheck(authorid,lastxp):
+def levelupcheck(authorid,lastxp): # this checks for levelling up when user fishes
     #ONLY SHOULD BE USED IF USERCHECK IS TRUE
     c.execute(f'SELECT * FROM fishyusers WHERE userid = {authorid}')
     data = c.fetchone()
@@ -213,7 +213,7 @@ def fishing(authorid,guildid,authorname):
     return data
 
 @bot.event
-async def on_command_error(ctx, error):
+async def on_command_error(ctx, error): # this is an event that runs when there is an error
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         await ctx.message.add_reaction("\U00002753") # red question mark
         checkuser = usercheck(ctx.message.author.id)
@@ -231,7 +231,7 @@ async def on_command_error(ctx, error):
             await errorchannel.send(embed=embed)
 
 @bot.command()
-async def top(ctx,type): 
+async def top(ctx,type): # command used to display top users, or top guilds
     ########################################################
     # THE FOLLOWING CODE INSIDE THIS COMMAND IS TRASH      #
     ########################################################
@@ -305,7 +305,7 @@ async def top(ctx,type):
 
 
 @bot.command()
-async def fish(ctx):
+async def fish(ctx): # the fishing command. this consists of 1. checking if the user exists 2. if user exists, put together an embed and get a fish from DB using fishing() func, 3. sends it and calls fish_update_success()
     channel = ctx.message.channel
     authorid = ctx.message.author.id
     authorname = ctx.message.author.name
@@ -361,11 +361,11 @@ async def fish(ctx):
     conn.commit()
 
 @bot.command()
-async def support(ctx):
+async def support(ctx): # this sends the fishypy support server link
     await ctx.send("`The support server's invite link is` http://discord.gg/HSqevex")
 
 @bot.command()
-async def removeuser(ctx,idtoremove):
+async def removeuser(ctx,idtoremove): # this removes an user from the DB. Owner only
     authorid = ctx.message.author.id
     ylist = ["Y","yes","Yes","y","yEs"]
     idtoremove = int(idtoremove)
@@ -380,7 +380,7 @@ async def removeuser(ctx,idtoremove):
     conn.commit()
 
 @bot.command()
-async def setvalue(ctx, idtomodify, valuetomodify, newvalue):
+async def setvalue(ctx, idtomodify, valuetomodify, newvalue): # this sets certain values in the DB. Owner only
     if ctx.message.author.id == 267410788996743168:
         authorid = ctx.message.author.id
         idtomodify = int(idtomodify)
@@ -411,28 +411,33 @@ async def setvalue(ctx, idtomodify, valuetomodify, newvalue):
         conn.commit()
 
 @bot.command()
-async def addguild(ctx):
-    theguild = bot.get_guild(ctx.message.id)
-    c.execute(f'SELECT * FROM fishyguilds WHERE guildid = {ctx.guild.id}')
-    data = c.fetchone()
-    if data == None:
-        #(guildid text, guildtotal text, globalpos text, topuser text, guildtrophyname text, guildtrophylength text)''')
-        c.execute(f"INSERT INTO fishyguilds VALUES ('{ctx.guild.id}','0','0','none','none')")
-        await ctx.send("`I've added this guild to my database!`")
+async def addguild(ctx): # this adds a guild to the db. Owner only
+    if ctx.message.author.id == 267410788996743168:
+        theguild = bot.get_guild(ctx.message.id)
+        c.execute(f'SELECT * FROM fishyguilds WHERE guildid = {ctx.guild.id}')
+        data = c.fetchone()
+        if data == None:
+            #(guildid text, guildtotal text, globalpos text, topuser text, guildtrophyname text, guildtrophylength text)''')
+            c.execute(f"INSERT INTO fishyguilds VALUES ('{ctx.guild.id}','0','0','none','none')")
+            await ctx.send("`I've added this guild to my database!`")
+        else:
+            await ctx.send("`Hmmm, i think this server is already in the database. If you believe this is wrong, please join our support server, using ]server`")
+        conn.commit()
     else:
-        await ctx.send("`Hmmm, i think this server is already in the database. If you believe this is wrong, please join our support server, using ]server`")
-    conn.commit()
+        await ctx.send("`Insufficent permission.`")
+        print(f"{ctx.message.author.name}({ctx.message.author.id}) tried to use addguild in guild {ctx.message.guild.name}({ctx.message.guild.id})!")
+        conn.commit()
 
 @bot.command()
-async def help(ctx):
+async def help(ctx): # help message
     await ctx.send(helpmsg)
     
 @bot.command()
-async def funnypicture(ctx):
+async def funnypicture(ctx): # pretend this isnt here
     await ctx.send("https://cdn.discordapp.com/attachments/615010360348639243/702892395347312703/unknown.png")
 
 @bot.command()
-async def profile(ctx):
+async def profile(ctx): # profile command
     authorid = ctx.message.author.id
     authorname = ctx.message.author.name
     guildid = ctx.message.guild.id 
@@ -472,7 +477,7 @@ async def profile(ctx):
     conn.commit()
 
 # @bot.command()
-# async def profilecolor(ctx,hexcolor):
+# async def profilecolor(ctx,hexcolor): # WIP
 #     authorid = ctx.message.author.id
 #     checkuser = usercheck(authorid)
 #     hexcolor = "0x"+hexcolor
@@ -501,7 +506,7 @@ async def profile(ctx):
 #     conn.commit()
 
 @bot.command()
-async def start(ctx):
+async def start(ctx): # adds users to DB so they can fish
     authorid = ctx.message.author.id
     authorname = ctx.message.author.name
     guildid = ctx.message.guild.id 
@@ -513,7 +518,7 @@ async def start(ctx):
     conn.commit()
 
 @bot.command()
-async def debug(ctx):
+async def debug(ctx): # debug stuff, depends whats in here. Owner only
     authorid = ctx.message.author.id
     if int(authorid) == int(ownersID):
         # await ctx.send("`Nothing is specified to debug.`")
@@ -524,7 +529,7 @@ async def debug(ctx):
         await ctx.send("`Missing permissions.`")
     authorid = ctx.message.author.id
 @bot.command()
-async def review(ctx, *, reviewtext):
+async def review(ctx, *, reviewtext): # review command. Sends a message to fishypy guild and saves that message ID in db. If user has sent a review it checks for that and edits it if it exists.
     authorid = ctx.message.author.id
     authorname = ctx.message.author.name
     checkuser = usercheck(authorid)
@@ -546,7 +551,7 @@ async def review(ctx, *, reviewtext):
             storedid = int(data[8])
             if storedid != 0:
                 msgtoedit = await reviewchannel.fetch_message(int(storedid))
-                await msgtoedit.edit(content=f"`Heres a review from {authorname}({authorid}):```\n{reviewtext}```")
+                await msgtoedit.edit(content=f"Heres a review from {ctx.author.mention}({authorid}):```\n{reviewtext}```")
                 await ctx.send(f"`Success! You've edited your review. If you think this was a mistake, and it shouldnt sent a message, please submit a issue on my github repo. The link can be found using {defaultprefix}info`")
             thereview = await reviewchannel.send(f"`review from {authorname}({authorid}):` ```\n{reviewtext}```")
             c.execute(f"Update fishyusers set reviewmsgid = {thereview.id} where userid = {authorid}")
@@ -556,7 +561,7 @@ async def review(ctx, *, reviewtext):
         await ctx.send(f"`I was unable to retrieve your profile. Have you done {defaultprefix}start yet?`")
 
 @bot.command()
-async def info(ctx):
+async def info(ctx): # info thing
     ping = bot.latency * 1000
     authorid = ctx.message.author.id
     authorname = ctx.message.author.name
