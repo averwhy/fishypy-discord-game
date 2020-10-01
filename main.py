@@ -7,6 +7,7 @@ import json
 import re, os, sys
 import platform
 import sqlite3
+import traceback
 from discord.ext import commands
 #CONFIG#######################################################################################################
 description = '''Fishy.py is an fork of Deda#9999's original Fishy bot. Fishy.py is being rewritten in discord.py API. To see commands use ]help. Full description on the fishy.py discord server: discord.gg/HSqevex'''
@@ -21,7 +22,7 @@ reviewChannel_id = 735206051703423036
 #BOT#PARAMS###################################################################################################
 TOKEN = ''
 userid = '695328763960885269'
-version = '0.93'
+version = '0.97'
 myname = "Fishy.py"
 invite = "https://discordapp.com/api/oauth2/authorize?bot_id=695328763960885269&permissions=8&scope=bot"
 bot = commands.Bot(command_prefix=defaultprefix,description=description,intent=discord.Intents(members=True))
@@ -220,17 +221,11 @@ async def on_command_error(ctx, error): # this is an event that runs when there 
         if checkuser == False:
             await ctx.message.author.send(f"Hey there! I couldnt recognize that command. Maybe try using `{defaultprefix}help` instead? **Note: this message is only sent to users absent in the database.*")
     else:
-        if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-            await ctx.message.add_reaction("\U00002757") # red exclamation mark
-        else:
-            errorchannel = await bot.fetch_channel(741848294581600337)
-            embed = discord.Embed(title="An error has occured!", description=f"{error}", colour=discord.Colour(0xfcd703))
-            embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
-            await asyncio.sleep(0.1)
-            await ctx.send(embed=embed)
-            await errorchannel.send(embed=embed)
+        # All other Errors not returned come here. And we can just print the default TraceBack.
+        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
-@bot.command()
+@bot.command(aliases=["t"])
 async def top(ctx,type): # command used to display top users, or top guilds
     ########################################################
     # THE FOLLOWING CODE INSIDE THIS COMMAND IS TRASH      #
@@ -364,7 +359,7 @@ async def fish(ctx): # the fishing command. this consists of 1. checking if the 
 async def support(ctx): # this sends the fishypy support server link
     await ctx.send("`The support server's invite link is` http://discord.gg/HSqevex")
 
-@bot.command()
+@bot.command(aliases=["ru"])
 async def removeuser(ctx,idtoremove): # this removes an user from the DB. Owner only
     authorid = ctx.message.author.id
     ylist = ["Y","yes","Yes","y","yEs"]
@@ -410,7 +405,7 @@ async def setvalue(ctx, idtomodify, valuetomodify, newvalue): # this sets certai
         print(f"{ctx.message.author.name}({ctx.message.author.id}) tried to use ]setvalue in guild {ctx.message.guild.name}({ctx.message.guild.id})!")
         conn.commit()
 
-@bot.command()
+@bot.command(aliases=["ag"])
 async def addguild(ctx): # this adds a guild to the db. Owner only
     if ctx.message.author.id == 267410788996743168:
         theguild = bot.get_guild(ctx.message.id)
@@ -428,7 +423,7 @@ async def addguild(ctx): # this adds a guild to the db. Owner only
         print(f"{ctx.message.author.name}({ctx.message.author.id}) tried to use addguild in guild {ctx.message.guild.name}({ctx.message.guild.id})!")
         conn.commit()
 
-@bot.command()
+@bot.command(aliases=["cmds","cmd"])
 async def help(ctx): # help message
     await ctx.send(helpmsg)
     
@@ -556,11 +551,11 @@ async def review(ctx, *, reviewtext): # review command. Sends a message to fishy
             thereview = await reviewchannel.send(f"`review from {authorname}({authorid}):` ```\n{reviewtext}```")
             c.execute(f"Update fishyusers set reviewmsgid = {thereview.id} where userid = {authorid}")
             conn.commit()
-            await ctx.send(f"`Success! You can edit your review at any time using this command.`")
+            await askmessage.edit(content=f"`Success! You can edit your review at any time using this command.`")
     else:
         await ctx.send(f"`I was unable to retrieve your profile. Have you done {defaultprefix}start yet?`")
 
-@bot.command()
+@bot.command(aliases=[""])
 async def info(ctx): # info thing
     ping = bot.latency * 1000
     authorid = ctx.message.author.id
