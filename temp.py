@@ -10,16 +10,16 @@
 import math
 import random, decimal
 import time
-# while True:
+while True:
 
-#     rodlvl = decimal.Decimal(random.randrange(100, 199))/100
-#     print(rodlvl)
-#     def rodUpgradebar(rodLvl):
-#         return f"{'#' * (decimal := round(rodLvl % 1 * 40))}{'_' * (40 - decimal)}"
-#     returned_upgradeBar = rodUpgradebar(rodlvl)
-#     print(returned_upgradeBar)
-#     time.sleep(1)
-ex_xp =  4.592
-ex_level = 0
-new_xp = ex_xp / 100
-print(new_xp)
+    rodlvl = decimal.Decimal(random.randrange(100, 199))/100
+    print(rodlvl)
+    def rodUpgradebar(rodLvl):
+        return f"{'#' * (decimal := round(rodLvl % 1 * 40))}{'_' * (40 - decimal)}"
+    returned_upgradeBar = rodUpgradebar(rodlvl)
+    print(returned_upgradeBar)
+    time.sleep(1)
+# ex_xp =  4.592
+# ex_level = 0
+# new_xp = ex_xp / 100
+# print(new_xp)
