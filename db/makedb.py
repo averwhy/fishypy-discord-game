@@ -1,9 +1,30 @@
 import sqlite3, os
-fuck = True
-#if os.path.isfile('fishypy.db'):
-if fuck == True:
+if True:
     conn = sqlite3.connect('fishypy.db')
     c = conn.cursor()
+    
+    c.execute('''CREATE TABLE fishyusers
+             (userid text, name text, totalcaught text, Level text, rank text, trophyoid text, guild text, hexcolor text, reviewmsgid text)''') #i make them all text so its easier
+             # userid = the users id (int)
+             # totalcaught = total number of fish caught (int)
+             # Level = the Level (int)
+             # rank = pos in database [DEPRECATED]
+             # trophyname = name of best fish caught (str)
+             # trophylength = length of best fish caught (str)[ex: "4.56cm"]
+             # guild = the guild id the user belongs to (int)
+             # hexcolor = the color that appears on their profile embed (str)
+             # reviewmsgid = the id of the review message the user submitted
+    ############################################################################################################################
+    c.execute('''CREATE TABLE fishyguilds
+             (guildid text, guildtotal text, globalpos text, topuser text, guildtrophyoid text)''')
+             #guildid = the guilds id (int)
+             #guildtotal = total number of fish caught ever in guild (int)
+             #globalpos = the guilds global position out of the rest of the guilds (int)
+             #topuser = the guilds top user (int)
+             #guildtrophyname = the guilds trophy fish, name (str)
+             #guildtrophylength = the guilds trophy fish, length (str)
+    print("Database not found. Necessary values were inserted.")
+    conn.commit()
     c.execute('''CREATE TABLE fishes
             (oid text, imgurl text, rarity text, id text, legnth text, name text, fishlength text)''')
     c.execute('''INSERT INTO fishes VALUES
@@ -16215,6 +16236,3 @@ if fuck == True:
     ('5acb817852eae82ef6ff58ec','http://www.fishbase.org/images/thumbnails/jpg/tn_Zuzun_u7.jpg',0.75,16205,140,'Zungaro zungaro',140.0);''')
     conn.commit()
     print("done?")
-
-# else:
-#     print("i am unable to continue as the fishy.py database is not existent")
