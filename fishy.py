@@ -24,7 +24,8 @@ reviewChannel_id = 735206051703423036
 time_started = time.localtime()
 
 #BOT#PARAMS###################################################################################################
-TOKEN = ''
+with open("TOKEN.txt",'r') as t:
+    TOKEN = t.readline()
 userid = '695328763960885269'
 version = '0.9.9'
 myname = "Fishy.py"
