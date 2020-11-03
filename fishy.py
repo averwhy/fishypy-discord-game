@@ -29,7 +29,7 @@ defaultprefix = "="
 with open("TOKEN.txt",'r') as t:
     TOKEN = t.readline()
 userid = '695328763960885269'
-version = '1.0.0'
+version = '1.0.1'
 myname = "Fishy.py"
 sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=355520&scope=bot"
 bot = commands.Bot(command_prefix=["=",";","f!","fishy "],description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
@@ -1137,16 +1137,19 @@ async def status(ctx, *, text):
     except:
         await ctx.message.add_reaction("\U0000274c")
    
-newstext = "No news!"     
+newstext = "No news!"
+news_set_by = "no one yet..."
 @bot.command()
 async def news(ctx, *,setnews = None):
     global newstext
+    global news_set_by
     if setnews == None:
         embed = discord.Embed(title="Fishy.py News",description=newstext,colour=discord.Colour(0x158b94))
-        embed.set_footer(text=f"News set by {ctx.author.name}")
+        embed.set_footer(text=f"News set by {news_set_by}")
         await ctx.send(embed=embed)
     elif ctx.author.id == ownersID:
         newstext = setnews
+        news_set_by = str(ctx.author.name)
         await ctx.message.add_reaction("\U00002705")
         await ctx.send("`News was set succesfully!`")
     else:
