@@ -29,7 +29,7 @@ defaultprefix = "="
 with open("TOKEN.txt",'r') as t:
     TOKEN = t.readline()
 userid = '695328763960885269'
-version = '0.9.9'
+version = '1.0.0'
 myname = "Fishy.py"
 sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=355520&scope=bot"
 bot = commands.Bot(command_prefix=["=",";","f!","fishy "],description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
