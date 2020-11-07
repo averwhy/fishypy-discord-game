@@ -32,9 +32,10 @@ userid = '695328763960885269'
 version = '1.0.1'
 myname = "Fishy.py"
 sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=355520&scope=bot"
-bot = commands.Bot(command_prefix=["=",";","f!","fishy "],description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
+#bot = commands.Bot(command_prefix=["=",";","f!","fishy "],description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
+bot = commands.Bot(command_prefix=[","],description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
 bot.remove_command('help')
-
+initial_extensions = ['cogs.FishyServerTools','jishaku']
 #DB#MANAGEMENT################################################################################################
 if os.path.isfile('fishypy.db'):
     db_exists = True
@@ -201,7 +202,6 @@ class db_user:
                 async with aiosqlite.connect('fishypy.db') as db:
                     await db.execute(f"Update fishyusers set reviewmsgid = {r_id} where userid = {userobject.id}")
                     await db.commit()
-                     
                 return (f"`Success! You can edit your review at any time using this command.`")
         else:
             return (f"`I was unable to retrieve your profile. Have you done {defaultprefix}start yet?`")
@@ -209,6 +209,7 @@ class db_user:
         try:
             async with aiosqlite.connect('fishypy.db') as db:
                 await db.execute("UPDATE fishyusers SET guildid = ? WHERE userid = ?",(userid,newguildid,))
+                await db.commit()
             return
         except Exception as e:
             return e
@@ -216,20 +217,9 @@ class db_user:
         async with aiosqlite.connect('fishypy.db') as db:
             c = await db.execute("SELECT * FROM fishyusers WHERE userid = ?",(userobject.id,))
             data = await c.fetchone()
-            if data is not None:
-                # await db.execute("DELETE FROM fishyusers WHERE userid = ?",(userobject.id,))
-                # await db.commit()
-                await db.execute(f"INSERT INTO bannedusers VALUES ('{userobject.id}','{userobject.name}','{reason}')")
-                await db.commit()
-                 
-                return
-            elif data is None:
-                await db.execute(f"INSERT INTO bannedusers VALUES (?,?,?)",(userobject.id,userobject.name,reason,))
-                await db.commit()
-                 
-            else:
-                print("Something went wrong banning user")
-                return
+            await db.execute(f"INSERT INTO bannedusers VALUES (?,?,?)",(userobject.id,userobject.name,reason,))
+            await db.commit()
+        return
     async def db_unban(self,userobject):
         async with aiosqlite.connect('fishypy.db') as db:
             c = await db.execute("SELECT * FROM fishyusers WHERE userid = ?",(userobject.id,))
@@ -304,16 +294,10 @@ class db_guild:
         return returndata
     async def add_guild(self,guildobject):
         async with aiosqlite.connect('fishypy.db') as db:
-            c = await db.execute("SELECT * FROM fishyguilds WHERE guildid = ?",(guildobject.id,))
-            data = await c.fetchone()
-            if data is not None:
-                await db.commit()
-                return
-            else:
-                #(guildid integer, guildname text, totalcaught integer , guildtrophyoid text, commoncaught integer, uncommoncaught integer, rarecaught integer, legendarycaught integer, mythicalcaught integer)
-                await db.execute(f"INSERT INTO fishyguilds VALUES (?,'?',0,'None', 0, 0, 0, 0, 0,'False')",(guildobject.id,guildobject.name,))
-                await db.commit()
-                return
+            #(guildid integer, guildname text, totalcaught integer , guildtrophyoid text, commoncaught integer, uncommoncaught integer, rarecaught integer, legendarycaught integer, mythicalcaught integer)
+            await db.execute(f"INSERT INTO fishyguilds VALUES (?,'?',0,'None', 0, 0, 0, 0, 0,'False')",(guildobject.id,guildobject.name,))
+            await db.commit()
+            return
     async def check_trophy(self,data,caughtoid):
         guildsid = data[0]
         async with aiosqlite.connect('fishypy.db') as db:
@@ -352,6 +336,31 @@ class db_guild:
             await db.execute("Update fishyguilds set totalcaught = (totalcaught + 1) where guildid = ?",(guildobject.id,))
             await db.commit()   
         return
+    async def update_rarity_count(self,guildobject,rarity):
+        userobject = guildobject
+        rarity = rarity.strip()
+        if rarity == "Common":
+            async with aiosqlite.connect('fishypy.db') as db:
+                c = await db.execute("UPDATE fishyguilds SET commoncaught = (commoncaught + 1) WHERE guildid = ?",(userobject.id,))
+                await db.commit()
+        elif rarity == "Mythical":
+            async with aiosqlite.connect('fishypy.db') as db:
+                c = await db.execute("UPDATE fishyguilds SET mythicalcaught = (mythicalcaught + 1) WHERE guildid = ?",(userobject.id,))
+                await db.commit()
+        elif rarity == "Legendary":
+            async with aiosqlite.connect('fishypy.db') as db:
+                c = await db.execute("UPDATE fishyguilds SET legendarycaught = (legendarycaught + 1) WHERE guildid = ?",(userobject.id,))
+                await db.commit()
+        elif rarity == "Rare":
+            async with aiosqlite.connect('fishypy.db') as db:
+                c = await db.execute("UPDATE fishyguilds SET rarecaught = (rarecaught + 1) WHERE guildid = ?",(userobject.id,))
+                await db.commit()
+        elif rarity == "Uncommon":
+            async with aiosqlite.connect('fishypy.db') as db:
+                c = await db.execute("UPDATE fishyguilds SET uncommoncaught = (uncommoncaught + 1) WHERE guildid = ?",(userobject.id,))
+                await db.commit()
+        else:
+            print("Sadge")
         
 class bans:
     def __init__(self): #init func is useless because it cant be async Pepepains
@@ -374,13 +383,14 @@ class bans:
                 return "`That user is not banned!`"
             if data is not None:
                 return data[2]
+    
             
 
 async def usercheck(authorid): # this function checks if the user exists in the DB
     async with aiosqlite.connect('fishypy.db') as db:
         c = await db.execute("SELECT * FROM fishyusers WHERE userid = ?",(authorid,))
         data = await c.fetchone()
-    if data is None:   
+    if data is None:
         return False
     else:
         return True
@@ -445,6 +455,8 @@ async def on_command_error(ctx, error): # this is an event that runs when there 
         e = str(discord.PartialEmoji(name="ppOverheat", id=772189476704616498, animated=True))
         s = round(error.retry_after,2)
         msgtodelete = await ctx.send(f"`ERROR: Youre on cooldown for {s}s! Slow down for a couple seconds.` {e}")
+        if s < 1.0:
+            s += 2.0 # so it doesnt delete immeditaly
         await asyncio.sleep(s)
         await msgtodelete.delete()
     elif isinstance(error, discord.ext.commands.errors.NotOwner):
@@ -453,7 +465,7 @@ async def on_command_error(ctx, error): # this is an event that runs when there 
         await msgtodelete.delete()
     elif isinstance(error, BanCheckError):
         await ctx.send(f"`ERROR: You are banned! If this is a mistake, please join the Fishy.py support server to appeal. ({defaultprefix}support)`")
-        return
+        return  
     else:
         # All other Errors not returned come here. And we can just print the default TraceBack.
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
@@ -488,6 +500,10 @@ async def on_command(ctx):
 async def on_command_completion(ctx):
     global commandsActuallyRun
     commandsActuallyRun += 1
+
+@bot.command(aliases=["cmds","cmd","command","commands","?"])
+async def help(ctx): # help message
+    await ctx.send(helpmsg)
 
 @commands.cooldown(2,4,BucketType.user)
 @commands.check(ban_check)
@@ -583,7 +599,7 @@ async def top(ctx,type): # command used to display top users, or top guilds
 
         embed = discord.Embed(title=f"**Leaderboard**", description=f"Sorted by: Guilds Fish total", colour=discord.Colour(0x00caff))
         embed.set_author(name=f"User profile")
-        embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
+        embed.set_footer(text=f"Fishy.py - v{version}",icon_url=(bot.user.avatar_url))
         embed.add_field(name=f"1. {firstuser[1]}", value=f"Total caught: {firstuser[2]} fish", inline=False)
         embed.add_field(name=f"2. {seconduser[1]}", value=f"Total caught: {seconduser[2]} fish", inline=False)
         embed.add_field(name=f"3. {thirduser[1]}",value=f"Total caught: {thirduser[2]} fish",inline=False)
@@ -603,7 +619,7 @@ async def top(ctx,type): # command used to display top users, or top guilds
         fifthuser = data[4]
         embed = discord.Embed(title=f"**Leaderboard**", description=f"Sorted by: User Level", colour=discord.Colour(0x00caff))
         embed.set_author(name=f"User profile")
-        embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
+        embed.set_footer(text=f"Fishy.py - v{version}",icon_url=(bot.user.avatar_url))
         users_levelandxp = firstuser[3]
         users_levelandxp = float(users_levelandxp)
         levelmath = divmod(users_levelandxp,1)
@@ -644,57 +660,57 @@ async def support(ctx): # this sends the fishypy support server link
     await ctx.send("`The support server's invite link is` http://discord.gg/HSqevex")
 
 @commands.cooldown(1,20,BucketType.user)
-@bot.group(invoke_without_command=True)
+@bot.command()
 async def guild(ctx):
-    await ctx.send("`You were missing one of the below arguements:` ```md\n- view\n- change\n```")
-    
-@guild.command()
-async def view(ctx, guildid: int = None):
     authorid = ctx.message.author.id
     authorname = ctx.message.author.name
-    if guildid == None:
-        if ctx.guild == None:
-            await ctx.send("`Error: You didnt specify a guild, and are running this command in a DM!`")
+    if ctx.guild == None:
+        await ctx.send("`Error: You didnt specify a guild, and are running this command in a DM!`")
+    else:
+        guildid = ctx.message.guild.id
+        data = await grab_db_user(authorid)
+        guildidtograb = int(data[5])
+        returnedlist = await grab_db_guild(guildidtograb)
+        async with aiosqlite.connect("fishypy.db") as db:
+            c = await db.execute("SELECT * FROM (SELECT guildid, RANK() OVER (ORDER BY totalcaught DESC) AS totalcaught FROM fishyguilds) a WHERE guildid = ?;",(ctx.message.guild.id,)) # i love this statement
+            data1 = await c.fetchone()
+            c = await db.execute("SELECT * FROM fishyguilds")
+            data2 = await c.fetchall()
+            await db.commit()
+        grabbedguild = bot.get_guild(guildidtograb)
+        if grabbedguild == None:
+            grabbedguild = await bot.fetch_guild(int(returnedlist[0]))
+        embed = discord.Embed(title=f"**{grabbedguild.name}**", description=f"*ID:{returnedlist[0]}*", colour=discord.Colour(0x242424))
+        embed.set_footer(text=f"Fishy.py - v{version}",icon_url=(bot.user.avatar_url))
+        embed.add_field(name="Total fish caught", value=f"{returnedlist[2]}")   
+        embed.add_field(name="Rank", value=f"#{data1[1]} out of {len(data2)} guilds")
+        async with aiosqlite.connect("fishypy.db") as db:
+            c = await db.execute("SELECT * FROM fishyusers WHERE guildid = ? ORDER BY Level DESC",(grabbedguild.id,))
+            data3 = await c.fetchone()
+        users_levelandxp = data3[3]
+        users_levelandxp = float(users_levelandxp)
+        levelmath = divmod(users_levelandxp,1)
+        embed.add_field(name="Top user",value=f"{data3[1]}, at level {int(levelmath[0])}",inline=False)
+        # print(levelmath)
+        trophyOID = returnedlist[5]
+        dbguild = db_guild()
+        data = await dbguild.get_trophy(data=returnedlist)
+        if data == None:
+            tvalue = "This guild has no trophy!"
         else:
-            guildid = ctx.message.guild.id
-            data = await grab_db_user(authorid)
-            guildidtograb = int(data[5])
-            returnedlist = await grab_db_guild(guildidtograb)
-            async with aiosqlite.connect("fishypy.db") as db:
-                c = await db.execute("SELECT * FROM (SELECT guildid, RANK() OVER (ORDER BY totalcaught DESC) AS totalcaught FROM fishyguilds) a WHERE guildid = ?;",(ctx.message.guild.id,)) # i love this statement
-                data1 = await c.fetchone()
-                c = await db.execute("SELECT * FROM fishyguilds")
-                data2 = await c.fetchall()
-                await db.commit()
-            grabbedguild = bot.get_guild(guildidtograb)
-            if grabbedguild == None:
-                grabbedguild = await bot.fetch_guild(int(returnedlist[0]))
-            embed = discord.Embed(title=f"**{grabbedguild.name}**", description=f"*ID:{returnedlist[0]}*", colour=discord.Colour(0x242424))
-            embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
-            embed.add_field(name="Total fish caught", value=f"{returnedlist[2]}")   
-            embed.add_field(name="Rank", value=f"#{data1[1]} out of {len(data2)} guilds")
-            async with aiosqlite.connect("fishypy.db") as db:
-                c = await db.execute("SELECT * FROM fishyusers WHERE guildid = ? ORDER BY Level DESC",(grabbedguild.id,))
-                data3 = await c.fetchone()
-            users_levelandxp = data3[3]
-            users_levelandxp = float(users_levelandxp)
-            levelmath = divmod(users_levelandxp,1)
-            embed.add_field(name="Top user",value=f"{data3[1]}, at level {int(levelmath[0])}",inline=False)
-            # print(levelmath)
-            trophyOID = returnedlist[5]
-            dbguild = db_guild()
-            data = await dbguild.get_trophy(data=returnedlist)
-            if data == None:
-                tvalue = "This guild has no trophy!"
-            else:
-                tvalue = (f"**{data[5]}** at **{data[4]}cm**")
-                embed.set_image(url=data[1])
-            embed.add_field(name="Trophy", value=f"{tvalue}",inline=False)
-            embed.set_thumbnail(url=grabbedguild.icon_url)
-            await ctx.send(embed=embed)
+            tvalue = (f"**{data[5]}** at **{data[4]}cm**")
+            embed.set_image(url=data[1])
+        embed.add_field(name="Trophy", value=f"{tvalue}",inline=False)
+        embed.set_thumbnail(url=grabbedguild.icon_url)
+        await ctx.send(embed=embed)
+    
 @commands.cooldown(1,300,BucketType.user)
-@guild.command()
-async def change(ctx, newguild: int = None):
+@bot.group(aliases=["c","change","custom"])
+async def customize(ctx):
+    await ctx.send("`Youre missing one of the below params:` ```md\n- guild\n- color\n```")
+    
+@customize.command()
+async def guild(ctx, newguild: int = None):
     dbuser = db_user()
     if newguild is None:
         askmessage = await ctx.send(f"`Are you sure you want to change your guild to this server?`")
@@ -738,15 +754,42 @@ async def change(ctx, newguild: int = None):
             else:
                 await askmessage.edit(content=f"Something went wrong: ```\n{m}\n```")
 
+@commands.check(is_owner) # <-- temp
+@customize.command()
+async def color(ctx,hexcolor = None): # WIP
+    authorid = ctx.message.author.id
+    checkuser = await usercheck(authorid)
+    hexcolor = "0x"+hexcolor
+    covertedcolor = await commands.ColourConverter().convert(ctx,hexcolor)
+    checkuser = await usercheck(authorid)
+    if hexcolor is None:
+        await ctx.send("`Please provide a valid hex color value!`")
+    if checkuser == False:
+        await ctx.send(f"`I was unable to retrieve your profile. Have you done {defaultprefix}start yet?`")
+    else:
+        try:
+            embed = discord.Embed(title="<-- Theres a preview of your chosen color!", description=f"**Are you sure you would like to change your profile color to hex value {hexcolor}?**", colour=discord.Colour(hexcolor))
+            askmessage = await ctx.send(embed=embed)
+            await askmessage.add_reaction(emoji="\U00002705") # white check mark
+
+            def check(reaction, user):
+                return user == ctx.message.author and str(reaction.emoji) == "\U00002705"
+            try:
+                reaction, user = await bot.wait_for('reaction_add', timeout=secondstoReact, check=check)
+            except asyncio.TimeoutError:
+                pass
+            else:
+                await ctx.send(f"`Success! Do {defaultprefix}profile to see your new profile color.`")
+        except:
+            embed = discord.Embed(title="An error has occured!", description=f"Please input a valid hex value. See [this color picker](https://htmlcolorcodes.com/color-picker/) if you need help.", colour=discord.Colour(0xfcd703))
+            embed.set_footer(text=f"Fishy.py - v{version}",icon_url=(bot.user.avatar_url))
+            msgtoedit = await ctx.send(embed=embed)
+
 @bot.command()
 async def invite(ctx):
     await ctx.send(sinvite)
-
-@bot.command(aliases=["cmds","cmd"])
-async def help(ctx): # help message
-    await ctx.send(helpmsg)
     
-@bot.command()
+@bot.command(aliases=["fp"])
 @commands.cooldown(1,900,BucketType.user)
 async def funnypicture(ctx): # pretend this isnt here
     await ctx.send("https://cdn.discordapp.com/attachments/615010360348639243/702892395347312703/unknown.png")
@@ -771,7 +814,7 @@ async def profile(ctx, user: discord.User = None): # profile command
             theirguildid = int(returnedlist[5])
             #print(theirguildid)
             embed = discord.Embed(title=f"**{returnedlist[1]}**", description=f"*ID:{returnedlist[0]}*", colour=discord.Colour(0x242424))
-            embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
+            embed.set_footer(text=f"Fishy.py - v{version}",icon_url=(bot.user.avatar_url))
             users_levelandxp = returnedlist[3]
             users_levelandxp = float(users_levelandxp)
             levelmath = divmod(users_levelandxp,1)
@@ -818,7 +861,7 @@ async def profile(ctx, user: discord.User = None): # profile command
             returnedusersguild = bot.get_guild(theirguildid)
 
             embed = discord.Embed(title=f"**{returnedlist[1]}**", description=f"*ID:{returnedlist[0]}*", colour=discord.Colour(0x242424))
-            embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
+            embed.set_footer(text=f"Fishy.py - v{version}",icon_url=(bot.user.avatar_url))
             embed.add_field(name="Total fish caught", value=f"{int(returnedlist[2])}")
 
             async with aiosqlite.connect("fishypy.db") as db:
@@ -852,36 +895,6 @@ async def profile(ctx, user: discord.User = None): # profile command
             await ctx.send(embed=embed)
         else:
             await ctx.send(f"`I was unable to retrieve that profile. They may not be in the database. If they are, double check that ID or name.`")
-
-
-# @bot.command()
-# async def profilecolor(ctx,hexcolor): # WIP
-#     authorid = ctx.message.author.id
-#     checkuser = await usercheck(authorid)
-#     hexcolor = "0x"+hexcolor
-#     ##print(hexcolor)
-#     checkuser = await usercheck(authorid)
-#     if checkuser == False:
-#         await ctx.send(f"`I was unable to retrieve your profile. Have you done {defaultprefix}start yet?`")
-#     else:
-#         try:
-#             embed = discord.Embed(title="<-- Theres a preview of your chosen color!", description=f"Are you sure you would like to change your profile color to hex value {hexcolor}?", colour=discord.Colour(hexcolor))
-#             askmessage = await ctx.send(embed=embed)
-#             await askmessage.add_reaction(emoji="\U00002705") # white check mark
-
-#             def check(reaction, user):
-#                 return user == ctx.message.author and str(reaction.emoji) == "\U00002705"
-#             try:
-#                 reaction, user = await bot.wait_for('reaction_add', timeout=secondstoReact, check=check)
-#             except asyncio.TimeoutError:
-#                 pass
-#             else:
-#                 await ctx.send(f"`Success! Do {defaultprefix}profile to see your new profile color.`")
-#         except:
-#             embed = discord.Embed(title="An error has occured!", description=f"Please input a valid hex value. See [this color picker](https://htmlcolorcodes.com/color-picker/) if you need help.", colour=discord.Colour(0xfcd703))
-#             embed.set_footer(text=f"Fishy.py - {version}",icon_url=(bot.user.avatar_url))
-#             msgtoedit = await ctx.send(embed=embed)
-#     conn.commit()
 
 @bot.command()
 async def start(ctx): # adds users to DB so they can fish
@@ -951,33 +964,14 @@ async def info(ctx): # info thing
     embed.set_footer(text=f"Made with Python {platform.python_version()}, {platform.python_branch()} branch",icon_url="https://images-ext-1.discordapp.net/external/0KeQjRAKFJfVMXhBKPc4RBRNxlQSiieQtbSxuPuyfJg/http/i.imgur.com/5BFecvA.png")
     embed.add_field(name="Time started", value=time.strftime("%m-%d-%Y, %I:%M:%S EST",time_started))
     embed.add_field(name="Fish caught since start", value=f"{fishCaughtInSession}")
-    embed.add_field(name="XP Gained in session",value = f"{round(xpGainedinsession,3)}ms")
+    embed.add_field(name="XP Gained in session",value = f"{round(xpGainedinsession,3)}")
     embed.add_field(name="Commands run in session",value=commandsRun)
     embed.add_field(name="Commands run, in session, successfully",value=commandsActuallyRun)
     embed.add_field(name="Discord.py version",value=discord.__version__,inline=False)
-    embed.add_field(name="Ping", value=f"{round(ping, 3)}", inline=False)
+    embed.add_field(name="Ping", value=f"{round(ping, 3)}ms", inline=False)
     embed.add_field(name="Github link", value="https://github.com/averwhy/fishy-discord-game", inline=False)
     await ctx.send(embed=embed)
 
-@bot.command()
-@commands.check(is_owner)
-async def stop(ctx):
-    askmessage = await ctx.send("`Are you sure?`")
-    await askmessage.add_reaction(emoji="\U00002705") # white check mark
-    def check(reaction, user):
-        return user == ctx.message.author and str(reaction.emoji) == "\U00002705"
-    try:
-        reaction, user = await bot.wait_for('reaction_add', timeout=secondstoReact, check=check)
-    except asyncio.TimeoutError:
-        await askmessage.edit(content="`Prompt timed out. Try again`")
-    else:
-        await askmessage.clear_reactions()
-        await askmessage.edit(content="`Bye!`")
-        print(f"Bot is being stopped by {ctx.message.author} ({ctx.message.id})")
-        async with aiosqlite.connect('fishypy.db') as db: #useless lol
-            await db.commit()
-                
-        await bot.logout()
 @commands.cooldown(1,5,BucketType.user)
 @bot.command()
 async def trophy(ctx, user: discord.User = None):
@@ -990,7 +984,7 @@ async def trophy(ctx, user: discord.User = None):
             data = await dbuser.get_trophy(data1)
             if data == None:
                 embed = discord.Embed(title=f"You dont have a Trophy!",description="Try Fishing!")
-            else: 
+            else:
                 embed = discord.Embed(title=f"{ctx.message.author.name}'s Trophy",colour=discord.Colour(0x00cc00))
                 tvalue = (f"**{data[5]}** at **{data[4]}cm**")
                 embed.set_image(url=data[1])
@@ -1071,71 +1065,6 @@ async def run(ctx, *, statement):
         await ctx.message.add_reaction(emoji="\U00002705")
     except Exception as e:
         await ctx.send(f"```sql\n{e}\n```")
-@bot.command()
-@commands.check(is_owner)
-async def userban(ctx, user1: discord.User = None, *, reason = None):
-    if user1 == None:
-        await ctx.send("`You must provide an user ID/Mention!`")
-    else:
-        data = await grab_db_user(user1.id)
-        askmessage = await ctx.send(f"`Are you sure you want to ban` {user1.name} `({user1.id})?`")
-        await askmessage.add_reaction(emoji="\U00002705") # white check mark
-        
-        def check(reaction, user):
-            return user == ctx.message.author and str(reaction.emoji) == "\U00002705"
-        try:
-            reaction, user = await bot.wait_for('reaction_add', timeout=secondstoReact, check=check)
-        except asyncio.TimeoutError:
-            await askmessage.edit(content="`Timed out.`")
-        else:
-            async with aiosqlite.connect('fishypy.db') as db:
-                await db.execute("INSERT INTO bannedusers VALUES (?,?,?)",(user1.id,user1.name,reason,))
-                await db.commit()
-            dbuser = db_user()
-            await dbuser.db_ban(userobject=user1,reason=reason)
-            await ctx.send(f"`Banned {user1.name}!`")
-            banlogs = bot.get_channel(771008991748554775)
-            if banlogs is None:
-                banlogs = await bot.fetch_channel(771008991748554775)
-            await banlogs.send(f"__**User ban**__\n**User:** {str(user1)}\n**ID:** {user1.id}\n**Reason:** {reason}\n \n**Banned by:** {ctx.author.mention}")
-
-@bot.command()
-@commands.check(is_owner)
-async def userunban(ctx,user: discord.User = None):
-    if user == None:
-        await ctx.send("`You must provide an user ID/Mention!`")
-    else:
-        async with aiosqlite.connect('fishypy.db') as db:
-            c = await db.execute("SELECT * FROM bannedusers WHERE userid = ?",(user.id,))
-            data = await c.fetchone()
-            if data is None:
-                await ctx.send("`That user does not appear to be banned.`")
-            else:
-                await db.execute("DELETE FROM bannedusers WHERE userid = ?",(user.id,))
-                banlogs = bot.get_channel(771008991748554775)
-                if banlogs is None:
-                    banlogs = await bot.fetch_channel(771008991748554775)
-                await banlogs.send(f"__**User unban**__\n**User:** {str(user)}\n**ID:** {user.id}\n \n**Unbanned by:** {ctx.author.mention}")
-                await ctx.message.add_reaction("\U00002705")
-
-@commands.cooldown(1,20,BucketType.user)
-@bot.command()
-async def loadjsk(ctx):
-    try:
-        bot.load_extension("jishaku")
-        await ctx.send("`Done`")
-    except Exception as e:
-        await ctx.send(e)
-    
-@bot.command()
-@commands.check(is_owner)
-async def status(ctx, *, text):
-    # Setting `Playing ` status
-    try:
-        await bot.change_presence(activity=discord.Game(name=text))
-        await ctx.message.add_reaction("\U00002705")
-    except:
-        await ctx.message.add_reaction("\U0000274c")
    
 newstext = "No news!"
 news_set_by = "no one yet..."
@@ -1155,6 +1084,117 @@ async def news(ctx, *,setnews = None):
     else:
         await ctx.message.add_reaction("\U0000274c")
         await ctx.send("`Something went wrong. Make sure to provide no params while using news command`")
+
+@bot.group(invoke_without_command=True)
+@commands.check(is_owner)
+async def dev(ctx):
+    #bot dev commands
+    await ctx.send("`You're missing one of the below arguements:` ```md\n- reload\n- loadall\n- status <reason>\n- ban <user> <reason>\n```")
+
+@dev.command()
+@commands.check(is_owner)
+async def reload(ctx):
+    output = ""
+    m = await ctx.send("`Reloading all cogs...`")
+    for e in initial_extensions:
+        try:
+            bot.reload_extension(e)
+        except Exception as e:
+            e = str(e)
+            output = output + e + "\n"
+    if output == "":
+        await m.edit(content="`All cogs succesfully reloaded.`") # no output = no error
+    else:
+        await m.edit(content=f"`All cogs were reloaded, except:` ```\n{output}```") # output
+
+@dev.command()
+@commands.check(is_owner)
+async def loadall(ctx):
+    output = ""
+    m = await ctx.send("`Loading all cogs...`")
+    for e in initial_extensions:
+        try:
+            bot.load_extension(e)
+        except Exception as e:
+            e = str(e)
+            output = output + e + "\n"
+    if output == "":
+        await m.edit(content="`All cogs succesfully loaded.`") # no output = no error
+    else:
+        await m.edit(content=f"`All cogs were loaded, except:` ```\n{output}```") # output
+        
+@dev.command()
+@commands.check(is_owner)
+async def status(ctx, *, text):
+    # Setting `Playing ` status
+    try:
+        await bot.change_presence(activity=discord.Game(name=text))
+        await ctx.message.add_reaction("\U00002705")
+    except Exception as e:
+        await ctx.message.add_reaction("\U0000274c")
+        await ctx.send(f"`{e}`")
+        
+@dev.command(aliases=["userban"])
+@commands.check(is_owner)
+async def ban(ctx, user1: discord.User = None, *, reason = None):
+    if user1 == None:
+        await ctx.send("`You must provide an user ID/Mention!`")
+    else:
+        data = await grab_db_user(user1.id)
+        askmessage = await ctx.send(f"`Are you sure you want to ban` {user1.name} `({user1.id})?`")
+        await askmessage.add_reaction(emoji="\U00002705") # white check mark
+        
+        def check(reaction, user):
+            return user == ctx.message.author and str(reaction.emoji) == "\U00002705"
+        try:
+            reaction, user = await bot.wait_for('reaction_add', timeout=secondstoReact, check=check)
+        except asyncio.TimeoutError:
+            await askmessage.edit(content="`Timed out.`")
+        else:
+            dbuser = db_user()
+            await dbuser.db_ban(userobject=user1,reason=reason)
+            await ctx.send(f"`Banned {user1.name}!`")
+            banlogs = bot.get_channel(771008991748554775)
+            if banlogs is None:
+                banlogs = await bot.fetch_channel(771008991748554775)
+            await banlogs.send(f"__**User ban**__\n**User:** {str(user1)}\n**ID:** {user1.id}\n**Reason:** {reason}\n \n**Banned by:** {ctx.author.mention}")
+
+@dev.command(aliases=["userunban"])
+@commands.check(is_owner)
+async def unban(ctx,user: discord.User = None):
+    if user == None:
+        await ctx.send("`You must provide an user ID/Mention!`")
+    else:
+        async with aiosqlite.connect('fishypy.db') as db:
+            c = await db.execute("SELECT * FROM bannedusers WHERE userid = ?",(user.id,))
+            data = await c.fetchone()
+            if data is None:
+                await ctx.send("`That user does not appear to be banned.`")
+            else:
+                await db.execute("DELETE FROM bannedusers WHERE userid = ?",(user.id,))
+                await db.commit()
+                banlogs = bot.get_channel(771008991748554775)
+                if banlogs is None:
+                    banlogs = await bot.fetch_channel(771008991748554775)
+                await banlogs.send(f"__**User unban**__\n**User:** {str(user)}\n**ID:** {user.id}\n \n**Unbanned by:** {ctx.author.mention}")
+                await ctx.message.add_reaction("\U00002705")
+
+@dev.command()
+@commands.check(is_owner)
+async def stop(ctx):
+    askmessage = await ctx.send("`you sure?`")
+    def check(m):
+        newcontent = m.content.lower()
+        return newcontent == 'yea' and m.channel == ctx.channel
+    try:
+        await bot.wait_for('message', timeout=secondstoReact, check=check)
+    except asyncio.TimeoutError:
+        await askmessage.edit(content="`Timed out. haha why didnt you respond you idiot`")
+    else:
+        await askmessage.clear_reactions()
+        await ctx.send("`bye`")
+        print(f"Bot is being stopped by {ctx.message.author} ({ctx.message.id})")
+        await bot.logout()
 
 @bot.event
 async def on_ready():
