@@ -132,7 +132,7 @@ class FishyServerTools(commands.Cog):
                 elif c.overwrites_for(everyone).send_messages in [False]:
                     pass
                 else:
-                    newperms.send_messages = False
+                    currentperms.send_messages = False
                     await c.set_permissions(overwrite=currentperms,reason=f"Server lock by {str(ctx.author)}")
                     await asyncio.sleep(0.5)
         except Exception as e:
@@ -152,7 +152,7 @@ class FishyServerTools(commands.Cog):
                 elif c.overwrites_for(everyone).send_messages in [None,True]:
                     pass
                 else:
-                    newperms.send_messages = None
+                    currentperms.send_messages = None
                     await c.set_permissions(overwrite=currentperms,reason=f"Server lock by {str(ctx.author)}")
                     await asyncio.sleep(0.5)
         except Exception as e:

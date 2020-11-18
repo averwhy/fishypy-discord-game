@@ -1194,7 +1194,7 @@ async def stop(ctx):
 @commands.check(is_owner)
 async def resetcooldown(ctx):
     try:
-        command._buckets = commands.CooldownMapping.from_cooldown(commands._buckets._cooldown.rate, commands._buckets._cooldown.per, commands._buckets._cooldown.type)
+        commands._buckets = commands.CooldownMapping.from_cooldown(commands._buckets._cooldown.rate, commands._buckets._cooldown.per, commands._buckets._cooldown.type)
         await ctx.send("`All cooldowns reset.`")
     except Exception as e:
         await ctx.send(f"{e}")
