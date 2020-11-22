@@ -1,14 +1,12 @@
-import discord
-import aiohttp
+# pylint: disable=wrong-import-order, missing-function-docstring, invalid-name, broad-except, too-many-branches, too-many-statements, too-many-locals, 
+
+import platform
+import traceback
 import asyncio
 import time
-import random, math
-import json
-import re, os, sys
-import platform
+import os, sys
 import aiosqlite
-import traceback
-import jishaku
+import discord
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
@@ -52,7 +50,7 @@ Compete with others for best collection
 [{bot.defaultprefix}about][learn more about Fishy.py]
 [{bot.defaultprefix}profile|p][your profile and stats, or someone elses]
 [{bot.defaultprefix}trophy][your trophy, or someone elses]
-[{bot.defaultprefix}guild view/change][view guild profile]
+[{bot.defaultprefix}guild][view guild profile]
 [{bot.defaultprefix}top|t (guilds,users)][Leaderboards]
 [{bot.defaultprefix}info][info and stats about bot]
 [{bot.defaultprefix}review][leave a review for the bot :) ]
@@ -157,10 +155,8 @@ class db_user:
                 async with aiosqlite.connect('fishypy.db') as db:
                     await db.execute("Update fishyusers set trophyoid = ? where userid = ?", (caughtoid, usersid,))
                     await db.commit()
-                #print(FishLengthFromTrophy, "is smaller than", FishLengthJustCaught)
                 return
             else:
-                #print(f"{FishLengthFromTrophy} vs {FishLengthJustCaught}")
                 #No updating needed
                 return
         except:
@@ -177,35 +173,38 @@ class db_user:
             try:
                 async with aiosqlite.connect('fishypy.db') as db:
                     #(userid integer, name text, totalcaught integer, Level real, trophyoid text, guildid integer, hexcolor text, reviewmsgid integer, commoncaught integer, uncommoncaught integer, rarecaught integer, legendarycaught integer, mythicalcaught integer)
-                    await db.execute(f"INSERT INTO fishyusers VALUES (?,?,0,0.0,'None',?,'005dff', 0, 0, 0, 0, 0, 0)",(userobject.id,userobject.name,userobject.guild.id,))
+                    await db.execute("INSERT INTO fishyusers VALUES (?,?,0,0.0,'None',?,'005dff', 0, 0, 0, 0, 0, 0)",(userobject.id,userobject.name,userobject.guild.id,))
                     await db.commit()
                 return (f"`Done! Start fishing with {bot.defaultprefix}fish, or view your profile with {bot.defaultprefix}profile`")
             except Exception as e:
                 return (f"`Something went wrong:` ```\n{e}\n```")
-    async def update_review(self,userobject,r_id,reviewtext):
+    async def update_review(self,userobject,reviewtext):
         try:
             async with aiosqlite.connect('fishypy.db') as db:
                 c = await db.execute("SELECT * FROM fishyusers WHERE userid = ?",(userobject.id,))
                 data = await c.fetchone()
                 await db.commit()
                 
-            if data is not None:
-                reviewchannel = bot.get_channel(reviewChannel_id)
-                data = list(data)
-                storedid = int(data[7])
-                if storedid != 0:
-                    msgtoedit = reviewchannel.get_message(int(storedid))
+            if data is not None: # player exists
+                stored_id = int(data[7])
+                reviewchannel = bot.get_channel(735206051703423036)
+                if reviewchannel is None:
+                    reviewchannel = await bot.fetch_channel(735206051703423036)
+                if stored_id != 0: # they have a review
+                    msgtoedit = await reviewchannel.fetch_message(stored_id)
                     await msgtoedit.edit(content=f"Heres a review from {str(userobject)} ({userobject.id}):```\n{reviewtext}```")
                     return ("`Success! You've edited your review.")
-                else:
+                else: # they dont have a review
+                    thereview = await reviewchannel.send(f"Heres a review from {userobject.mention} ({userobject.id}):```\n{reviewtext}```")
                     async with aiosqlite.connect('fishypy.db') as db:
-                        await db.execute(f"Update fishyusers set reviewmsgid = ? where userid = ?",(r_id,userobject.id,))
+                        await db.execute("Update fishyusers set reviewmsgid = ? where userid = ?",(thereview.id,userobject.id,))
                         await db.commit()
-                    return (f"`Success! You can edit your review at any time using this command.`")
+                        
+                    return ("`Success! You can edit your review at any time using this command.`")
             else:
                 return (f"`I was unable to retrieve your profile. Have you done {bot.defaultprefix}start yet?`")
         except Exception as e:
-            return e
+            return (f"`{e}`")
     async def update_guild(self,userid,newguildid):
         try:
             async with aiosqlite.connect('fishypy.db') as db:
@@ -218,7 +217,7 @@ class db_user:
         async with aiosqlite.connect('fishypy.db') as db:
             c = await db.execute("SELECT * FROM fishyusers WHERE userid = ?",(userobject.id,))
             data = await c.fetchone()
-            await db.execute(f"INSERT INTO bannedusers VALUES (?,?,?)",(userobject.id,userobject.name,reason,))
+            await db.execute("INSERT INTO bannedusers VALUES (?,?,?)",(userobject.id,userobject.name,reason,))
             await db.commit()
         return
     async def db_unban(self,userobject):
@@ -226,7 +225,7 @@ class db_user:
             c = await db.execute("SELECT * FROM fishyusers WHERE userid = ?",(userobject.id,))
             data = await c.fetchone()
             if data is not None:
-                await db.execute(f"DELETE FROM bannedusers WHERE userid = ?",(userobject.id,))
+                await db.execute("DELETE FROM bannedusers WHERE userid = ?",(userobject.id,))
                 await db.commit()
     async def update_xp(self,userobject,rarity): # this entire method is a mess, i hate it lmao
         rarity = float(rarity)
@@ -253,8 +252,9 @@ class db_user:
             return False
     async def update_profilecolor(self,hexstring,id):
         async with aiosqlite.connect('fishypy.db') as db:
-            await db.execute("UPATE fishyusers SET hexcolor = ? WHERE userid = ?",(hexstring,id,))
+            await db.execute("UPDATE fishyusers SET hexcolor = ? WHERE userid = ?",(hexstring,id,))
             await db.commit()
+        return
     async def update_rarity_count(self,userobject,rarity):
         raritycalc2 = None
         rarity = rarity.strip()
@@ -319,10 +319,8 @@ class db_guild:
                 async with aiosqlite.connect('fishypy.db') as db:
                     await db.execute("Update fishyguilds set guildtrophyoid = ? where guildid = ?", (caughtoid, guildsid,))
                     await db.commit()
-                #print(FishLengthFromTrophy, "is smaller than", FishLengthJustCaught)
                 return
             else:
-                #print(f"{FishLengthFromTrophy} vs {FishLengthJustCaught}")
                 #No updating needed
                 return
         except:
@@ -443,7 +441,7 @@ async def ban_check(ctx):
     async with aiosqlite.connect('fishypy.db') as db:
         c = await db.execute("SELECT * FROM bannedusers WHERE userid = ?",(ctx.author.id,))
         data = await c.fetchone()
-    if data == None: # If none, user is not banned 
+    if data is None: # If none, user is not banned 
         return True
     raise BanCheckError()
 
@@ -466,10 +464,12 @@ async def on_command_error(ctx, error): # this is an event that runs when there 
         s = round(error.retry_after,2)
         if s > 3600: # over 1 hour
             s /= 3600
+            s = round(s,1)
             s = f"{s} hour(s)"
         elif s > 60: # over 1 minute
             s /= 60
-            s = f"{s} minute(2)"
+            s = round(s,2)
+            s = f"{s} minute(s)"
         else: #below 1 min
             s = f"{s} seconds"
         msgtodelete = await ctx.send(f"`ERROR: Youre on cooldown for {s}!` {emote}")
@@ -543,7 +543,7 @@ async def fish(ctx): # the fishing command. this consists of 1. checking if the 
     if checkuser == False:
         await ctx.send(f"`I was unable to retrieve your profile. Have you done {bot.defaultprefix}start yet?`")
     else:
-        embed = discord.Embed(title=f"**React to fish!**", description="", colour=discord.Colour(0x000000))
+        embed = discord.Embed(title="**React to fish!**", description="", colour=discord.Colour(0x000000))
         msgtoedit = await ctx.send(embed=embed)
         await msgtoedit.add_reaction(emoji="\U0001f41f") # fish emoji
         await msgtoedit.add_reaction(emoji="\U0001f419") # octopus
@@ -556,10 +556,10 @@ async def fish(ctx): # the fishing command. this consists of 1. checking if the 
         except asyncio.TimeoutError:
             try:
                 await msgtoedit.clear_reactions()
-                embed = discord.Embed(title=f"**Timed out :(**", description=f"Fish again?", colour=discord.Colour(0x000000))
+                embed = discord.Embed(title="**Timed out :(**", description="Fish again?", colour=discord.Colour(0x000000))
                 await msgtoedit.edit(embed=embed)
             except discord.errors.Forbidden:
-                if ctx.guild == None:
+                if ctx.guild is None:
                     pass
                 else:
                     print(f"Failed to remove reactions in guild {guildname} ({guildid}), channel #{ctx.message.channel.name}")
@@ -567,7 +567,7 @@ async def fish(ctx): # the fishing command. this consists of 1. checking if the 
             try:
                 await msgtoedit.clear_reactions()
             except discord.errors.Forbidden:
-                if ctx.guild == None:
+                if ctx.guild is None:
                     pass
                 else:
                     print(f"Failed to remove reactions in guild {guildname} ({guildid}), channel #{ctx.message.channel.name}")
@@ -619,7 +619,6 @@ async def guilds(ctx):
     fifthuser = data[4]
 
     embed = discord.Embed(title=f"**Leaderboard**", description=f"Sorted by: Guilds Fish total", colour=discord.Colour(0x00caff))
-    embed.set_author(name=f"User profile")
     embed.set_footer(text=f"Fishy.py - v{bot.version}",icon_url=(bot.user.avatar_url))
     embed.add_field(name=f"1. {firstuser[1]}", value=f"Total caught: {firstuser[2]} fish", inline=False)
     embed.add_field(name=f"2. {seconduser[1]}", value=f"Total caught: {seconduser[2]} fish", inline=False)
@@ -641,7 +640,6 @@ async def users(ctx):
     fourthuser = data[3]
     fifthuser = data[4]
     embed = discord.Embed(title=f"**Leaderboard**", description=f"Sorted by: User Level", colour=discord.Colour(0x00caff))
-    embed.set_author(name=f"User profile")
     embed.set_footer(text=f"Fishy.py - v{bot.version}",icon_url=(bot.user.avatar_url))
     users_levelandxp = firstuser[3]
     users_levelandxp = float(users_levelandxp)
@@ -677,14 +675,16 @@ async def users(ctx):
     await ctx.send(embed=embed)
 
 @commands.check(ban_check)
-@commands.cooldown(1,30,BucketType.user)
+@commands.cooldown(1,60,BucketType.user)
 @bot.command()
-async def guild(ctx):
+async def guild(ctx, server: int = None):
     authorid = ctx.message.author.id
     authorname = ctx.message.author.name
     if ctx.guild is None:
         await ctx.send("`Error: You didnt specify a guild, and are running this command in a DM!`")
-    else:
+        return
+    dbguild = db_guild()
+    if server is None:
         guildid = ctx.message.guild.id
         data = await grab_db_user(authorid)
         guildidtograb = int(data[5])
@@ -696,7 +696,7 @@ async def guild(ctx):
             data2 = await c.fetchall()
             await db.commit()
         grabbedguild = bot.get_guild(guildidtograb)
-        if grabbedguild == None:
+        if grabbedguild is None:
             grabbedguild = await bot.fetch_guild(int(returnedlist[0]))
         embed = discord.Embed(title=f"**{grabbedguild.name}**", description=f"*ID:{returnedlist[0]}*", colour=discord.Colour(0x242424))
         embed.set_footer(text=f"Fishy.py - v{bot.version}",icon_url=(bot.user.avatar_url))
@@ -711,9 +711,8 @@ async def guild(ctx):
         embed.add_field(name="Top user",value=f"{data3[1]}, at level {int(levelmath[0])}",inline=False)
         # print(levelmath)
         trophyOID = returnedlist[5]
-        dbguild = db_guild()
         data = await dbguild.get_trophy(data=returnedlist)
-        if data == None:
+        if data is None:
             tvalue = "This guild has no trophy!"
         else:
             tvalue = (f"**{data[5]}** at **{data[4]}cm**")
@@ -721,6 +720,9 @@ async def guild(ctx):
         embed.add_field(name="Trophy", value=f"{tvalue}",inline=False)
         embed.set_thumbnail(url=grabbedguild.icon_url)
         await ctx.send(embed=embed)
+        return
+    else:
+        await ctx.send("`Sorry, viewing other guild profiles via ID is temporarily unavaliable.`")
     
 @commands.check(ban_check)
 @commands.cooldown(1,300,BucketType.user)
@@ -835,13 +837,13 @@ async def profile(ctx, user: discord.User = None): # profile command
     r_f =  str(discord.PartialEmoji(name="rare_fish", id=770254565462376459, animated=False))
     l_f =  str(discord.PartialEmoji(name="legendary_fish", id=770254565793857537, animated=False))
     m_f =  str(discord.PartialEmoji(name="mythical_fish", id=770254565852315658, animated=False))
-    if user == None:
+    if user is None:
         checkuser = await usercheck(authorid)
         if checkuser is not False:
             returnedlist = await grab_db_user(authorid)
             theirguildid = int(returnedlist[5])
-            #print(theirguildid)
-            embed = discord.Embed(title=f"**{returnedlist[1]}**", description=f"*ID:{returnedlist[0]}*", colour=discord.Colour(0x242424))
+            newhexcolor = int((f"0x{returnedlist[6]}"),0)
+            embed = discord.Embed(title=f"**{returnedlist[1]}**", description=f"*ID:{returnedlist[0]}*", colour=discord.Colour(newhexcolor))
             embed.set_footer(text=f"Fishy.py - v{bot.version}",icon_url=(bot.user.avatar_url))
             users_levelandxp = returnedlist[3]
             users_levelandxp = float(users_levelandxp)
@@ -869,7 +871,7 @@ async def profile(ctx, user: discord.User = None): # profile command
             trophyOID = returnedlist[4]
             tdata = await grab_db_user(authorid)
             data = await dbuser.get_trophy(data=tdata)
-            if data == None:
+            if data is None:
                 tvalue = "You have no Trophy! Try fishing!"
             else:
                 tvalue = (f"**{data[5]}** at **{data[4]}cm**")
@@ -912,7 +914,7 @@ async def profile(ctx, user: discord.User = None): # profile command
             trophyOID = returnedlist[4]
             tdata = await grab_db_user(authorid)
             data = await tfish.getfish(trophyOID)
-            if data == None:
+            if data is None:
                 tvalue = "You have no Trophy! Try fishing!"
             else:
                 tvalue = (f"**{data[5]}** at **{data[4]}cm**")
@@ -961,22 +963,26 @@ async def review(ctx, *, reviewtext): # review command. Sends a message to fishy
     authorname = ctx.message.author.name
     checkuser = await usercheck(authorid)
     if checkuser is not False:
-        reviewchannel = bot.get_channel(735206051703423036)
         data = await grab_db_user(id=authorid)
         user = db_user()
-        askmessage = await ctx.send("`Are you sure you would like to submit your review? If it contains inappropriate content, you will be banned from the bot.`")
+        askmessage = await ctx.send("`Are you sure you would like to submit your review? `")
         await askmessage.add_reaction(emoji="\U00002705") # white check mark
         def check(reaction, user):
             return user == ctx.message.author and str(reaction.emoji) == "\U00002705"
         try:
             reaction, user = await bot.wait_for('reaction_add', timeout=secondstoReact, check=check)
         except asyncio.TimeoutError:
+            try:
+                await askmessage.clear()
+            except: #no reaction perms
+                pass 
             await askmessage.edit(content="`Prompt timed out. Try again`")
         else:
             user = db_user()
-            thereview = await reviewchannel.send(f"Heres a review from {ctx.author.mention} ({ctx.author.id}):```\n{reviewtext}```")
-            await user.update_review(userobject=ctx.author,r_id=thereview.id,reviewtext=reviewtext)
-            
+            m = await user.update_review(userobject=ctx.author,reviewtext=reviewtext)
+            # and then
+            await askmessage.clear_reactions()
+            await askmessage.edit(content=m)   
     else:
         await ctx.send(f"`I was unable to retrieve your profile. Have you done {bot.defaultprefix}start yet?`")
 
@@ -991,7 +997,7 @@ async def trophy(ctx, user: discord.User = None):
             data1 = await grab_db_user(authorid)
             dbuser = db_user()
             data = await dbuser.get_trophy(data1)
-            if data == None:
+            if data is None:
                 embed = discord.Embed(title=f"You dont have a Trophy!",description="Try Fishing!")
             else:
                 embed = discord.Embed(title=f"{ctx.message.author.name}'s Trophy",url=data[1],colour=discord.Colour(0x00cc00))
@@ -1018,7 +1024,7 @@ async def trophy(ctx, user: discord.User = None):
             data1 = await grab_db_user(authorid)
             dbuser = db_user()
             data = await dbuser.get_trophy(data1)
-            if data == None:
+            if data is None:
                 embed = discord.Embed(title=f"You dont have a Trophy!",description="Try Fishing!")
             else: 
                 embed = discord.Embed(title=f"{ctx.message.author.name}'s Trophy",colour=discord.Colour(0x00cc00))
@@ -1040,6 +1046,149 @@ async def trophy(ctx, user: discord.User = None):
             await ctx.send(embed=embed)
 
 @bot.group(invoke_without_command=True)
+@commands.check(is_owner)
+async def dev(ctx):
+    #bot dev commands
+    await ctx.send("`You're missing one of the below arguements:` ```md\n- reload\n- loadall\n- status <reason>\n- ban <user> <reason>\n```")
+
+@dev.command(aliases=["r","reloadall"])
+@commands.check(is_owner)
+async def reload(ctx):
+    output = ""
+    amount_reloaded = 0
+    async with ctx.channel.typing():
+        for e in initial_extensions:
+            try:
+                bot.reload_extension(e)
+                amount_reloaded += 1
+            except Exception as e:
+                e = str(e)
+                output = output + e + "\n"
+        await asyncio.sleep(1)
+        if output == "":
+            await ctx.send(content=f"`{len(initial_extensions)} cogs succesfully reloaded.`") # no output = no error
+        else:
+            await ctx.send(content=f"`{amount_reloaded} cogs were reloaded, except:` ```\n{output}```") # output
+
+@dev.command(aliases=["load","l"])
+@commands.check(is_owner)
+async def loadall(ctx):
+    output = ""
+    amount_loaded = 0
+    async with ctx.channel.typing():
+        for e in initial_extensions:
+            try:
+                bot.load_extension(e)
+                amount_loaded += 1
+            except Exception as e:
+                e = str(e)
+                output = output + e + "\n"
+        await asyncio.sleep(1)
+        if output == "":
+            await ctx.send(content=f"`{len(initial_extensions)} cogs succesfully loaded.`") # no output = no error
+        else:
+            await ctx.send(content=f"`{amount_loaded} cogs were loaded, except:` ```\n{output}```") # output
+
+@commands.check(is_in_guild)
+@dev.command()
+@commands.check(is_owner)
+async def status(ctx, *, text):
+    # Setting `Playing ` status
+    if text is None:
+        await ctx.send(f"{ctx.guild.me.status}")
+    try:
+        await bot.change_presence(activity=discord.Game(name=text))
+        await ctx.message.add_reaction("\U00002705")
+    except Exception as e:
+        await ctx.message.add_reaction("\U0000274c")
+        await ctx.send(f"`{e}`")
+        
+@dev.command(aliases=["userban"])
+@commands.check(is_owner)
+async def ban(ctx, user1: discord.User = None, *, reason = None):
+    if user1 is None:
+        await ctx.send("`You must provide an user ID/Mention!`")
+    else:
+        data = await grab_db_user(user1.id)
+        askmessage = await ctx.send(f"`Are you sure you want to ban` {user1.name} `({user1.id})?`")
+        await askmessage.add_reaction(emoji="\U00002705") # white check mark
+        
+        def check(reaction, user):
+            return user == ctx.message.author and str(reaction.emoji) == "\U00002705"
+        try:
+            reaction, user = await bot.wait_for('reaction_add', timeout=secondstoReact, check=check)
+        except asyncio.TimeoutError:
+            await askmessage.edit(content="`Timed out.`")
+        else:
+            dbuser = db_user()
+            await dbuser.db_ban(userobject=user1,reason=reason)
+            await ctx.send(f"`Banned {user1.name}!`")
+            banlogs = bot.get_channel(771008991748554775)
+            if banlogs is None:
+                banlogs = await bot.fetch_channel(771008991748554775)
+            await banlogs.send(f"__**User ban**__\n**User:** {str(user1)}\n**ID:** {user1.id}\n**Reason:** {reason}\n \n**Banned by:** {ctx.author.mention}")
+
+@dev.command(aliases=["userunban"])
+@commands.check(is_owner)
+async def unban(ctx,user: discord.User = None):
+    if user is None:
+        await ctx.send("`You must provide an user ID/Mention!`")
+    else:
+        async with aiosqlite.connect('fishypy.db') as db:
+            c = await db.execute("SELECT * FROM bannedusers WHERE userid = ?",(user.id,))
+            data = await c.fetchone()
+            if data is None:
+                await ctx.send("`That user does not appear to be banned.`")
+            else:
+                await db.execute("DELETE FROM bannedusers WHERE userid = ?",(user.id,))
+                await db.commit()
+                banlogs = bot.get_channel(771008991748554775)
+                if banlogs is None:
+                    banlogs = await bot.fetch_channel(771008991748554775)
+                await banlogs.send(f"__**User unban**__\n**User:** {str(user)}\n**ID:** {user.id}\n \n**Unbanned by:** {ctx.author.mention}")
+                await ctx.message.add_reaction("\U00002705")
+
+@dev.command()
+@commands.check(is_owner)
+async def stop(ctx):
+    askmessage = await ctx.send("`you sure?`")
+    def check(m):
+        newcontent = m.content.lower()
+        return newcontent == 'yea' and m.channel == ctx.channel
+    try:
+        await bot.wait_for('message', timeout=secondstoReact, check=check)
+    except asyncio.TimeoutError:
+        await askmessage.edit(content="`Timed out. haha why didnt you respond you idiot`")
+    else:
+        await askmessage.clear_reactions()
+        await ctx.send("`bye`")
+        print(f"Bot is being stopped by {ctx.message.author} ({ctx.message.id})")
+        await bot.logout()
+        
+@dev.command(aliases=["rc"])
+@commands.check(is_owner)
+async def resetcooldown(ctx, *cmdnames):
+    output = ""
+    if "all" in cmdnames:
+        for c in bot.commands:
+            try:
+                c._buckets._cooldown.reset()
+                output = output + (f"Cooldown on command {c.name} successfully reset") + "\n"
+            except Exception as e:
+                e = str(e)
+                output = output + e + "\n"
+    else:
+        for c in cmdnames:
+            try:
+                cmd = bot.get_command(c)       
+                cmd._buckets._cooldown.reset()
+                output = output + (f"Cooldown on command {cmd.name} successfully reset") + "\n"
+            except Exception as e:
+                e = str(e)
+                output = output + e + "\n"
+    await ctx.send(f"```{output}\n```")
+    
+@dev.group(invoke_without_command=True)
 @commands.check(is_owner)
 async def sql(ctx):
     await ctx.send("`Youre missing one of the below params:` ```md\n- fetchone\n- fetchall\n- run\n```") 
@@ -1074,140 +1223,15 @@ async def run(ctx, *, statement):
         await ctx.message.add_reaction(emoji="\U00002705")
     except Exception as e:
         await ctx.send(f"```sql\n{e}\n```")
-
-@bot.group(invoke_without_command=True)
-@commands.check(is_owner)
-async def dev(ctx):
-    #bot dev commands
-    await ctx.send("`You're missing one of the below arguements:` ```md\n- reload\n- loadall\n- status <reason>\n- ban <user> <reason>\n```")
-
-@dev.command()
-@commands.check(is_owner)
-async def reload(ctx):
-    output = ""
-    amount_reloaded = 0
-    async with ctx.channel.typing():
-        for e in initial_extensions:
-            try:
-                bot.reload_extension(e)
-                amount_reloaded += 1
-            except Exception as e:
-                e = str(e)
-                output = output + e + "\n"
-        if output == "":
-            await ctx.send(content=f"`{len(initial_extensions)} cogs succesfully reloaded.`") # no output = no error
-        else:
-            await ctx.send(content=f"`{amount_reloaded} cogs were reloaded, except:` ```\n{output}```") # output
-
-@dev.command()
-@commands.check(is_owner)
-async def loadall(ctx):
-    output = ""
-    amount_loaded = 0
-    async with ctx.channel.typing():
-        for e in initial_extensions:
-            try:
-                bot.load_extension(e)
-                amount_loaded += 1
-            except Exception as e:
-                e = str(e)
-                output = output + e + "\n"
-        if output == "":
-            await ctx.send(content=f"`{len(initial_extensions)} cogs succesfully loaded.`") # no output = no error
-        else:
-            await ctx.send(content=f"`{amount_loaded} cogs were loaded, except:` ```\n{output}```") # output
-        
-@dev.command()
-@commands.check(is_owner)
-async def status(ctx, *, text):
-    # Setting `Playing ` status
-    try:
-        await bot.change_presence(activity=discord.Game(name=text))
-        await ctx.message.add_reaction("\U00002705")
-    except Exception as e:
-        await ctx.message.add_reaction("\U0000274c")
-        await ctx.send(f"`{e}`")
-        
-@dev.command(aliases=["userban"])
-@commands.check(is_owner)
-async def ban(ctx, user1: discord.User = None, *, reason = None):
-    if user1 == None:
-        await ctx.send("`You must provide an user ID/Mention!`")
-    else:
-        data = await grab_db_user(user1.id)
-        askmessage = await ctx.send(f"`Are you sure you want to ban` {user1.name} `({user1.id})?`")
-        await askmessage.add_reaction(emoji="\U00002705") # white check mark
-        
-        def check(reaction, user):
-            return user == ctx.message.author and str(reaction.emoji) == "\U00002705"
-        try:
-            reaction, user = await bot.wait_for('reaction_add', timeout=secondstoReact, check=check)
-        except asyncio.TimeoutError:
-            await askmessage.edit(content="`Timed out.`")
-        else:
-            dbuser = db_user()
-            await dbuser.db_ban(userobject=user1,reason=reason)
-            await ctx.send(f"`Banned {user1.name}!`")
-            banlogs = bot.get_channel(771008991748554775)
-            if banlogs is None:
-                banlogs = await bot.fetch_channel(771008991748554775)
-            await banlogs.send(f"__**User ban**__\n**User:** {str(user1)}\n**ID:** {user1.id}\n**Reason:** {reason}\n \n**Banned by:** {ctx.author.mention}")
-
-@dev.command(aliases=["userunban"])
-@commands.check(is_owner)
-async def unban(ctx,user: discord.User = None):
-    if user == None:
-        await ctx.send("`You must provide an user ID/Mention!`")
-    else:
-        async with aiosqlite.connect('fishypy.db') as db:
-            c = await db.execute("SELECT * FROM bannedusers WHERE userid = ?",(user.id,))
-            data = await c.fetchone()
-            if data is None:
-                await ctx.send("`That user does not appear to be banned.`")
-            else:
-                await db.execute("DELETE FROM bannedusers WHERE userid = ?",(user.id,))
-                await db.commit()
-                banlogs = bot.get_channel(771008991748554775)
-                if banlogs is None:
-                    banlogs = await bot.fetch_channel(771008991748554775)
-                await banlogs.send(f"__**User unban**__\n**User:** {str(user)}\n**ID:** {user.id}\n \n**Unbanned by:** {ctx.author.mention}")
-                await ctx.message.add_reaction("\U00002705")
-
-@dev.command()
-@commands.check(is_owner)
-async def stop(ctx):
-    askmessage = await ctx.send("`you sure?`")
-    def check(m):
-        newcontent = m.content.lower()
-        return newcontent == 'yea' and m.channel == ctx.channel
-    try:
-        await bot.wait_for('message', timeout=secondstoReact, check=check)
-    except asyncio.TimeoutError:
-        await askmessage.edit(content="`Timed out. haha why didnt you respond you idiot`")
-    else:
-        await askmessage.clear_reactions()
-        await ctx.send("`bye`")
-        print(f"Bot is being stopped by {ctx.message.author} ({ctx.message.id})")
-        await bot.logout()
-        
-@dev.command()
-@commands.check(is_owner)
-async def resetcooldown(ctx):
-    try:
-        commands._buckets = commands.CooldownMapping.from_cooldown(commands._buckets._cooldown.rate, commands._buckets._cooldown.per, commands._buckets._cooldown.type)
-        await ctx.send("`All cooldowns reset.`")
-    except Exception as e:
-        await ctx.send(f"{e}")
     
 @bot.event
 async def on_ready():
-    time_started = time.localtime()
     print('-------------------------------------------------------')
     print('Logged in as:')
     print(bot.user.name)
     print(bot.user.id)
     print('-------------------------------------------------------')
-    print(myname, bot.version,"is connected and running at",time.strftime("%m-%d-%Y, %I:%M:%S EST",time_started))
+    print(myname, bot.version,"is connected and running at",time.strftime("%m-%d-%Y, %I:%M:%S EST",bot.time_started))
     print('-------------------------------------------------------')
 
 for cog in initial_extensions:
@@ -1215,9 +1239,7 @@ for cog in initial_extensions:
         bot.load_extension(f"{cog}")
         print(f"loaded {cog}")
     except Exception as e:
-        print(
-            f"Failed to load {cog}, error:\n",
-            file=sys.stderr
-        )
+        print(f"Failed to load {cog}, error:\n", file=sys.stderr)
         traceback.print_exc()
+asyncio.set_event_loop(asyncio.SelectorEventLoop())
 bot.run(TOKEN, bot = True, reconnect = True)
