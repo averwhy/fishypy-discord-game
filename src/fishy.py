@@ -23,12 +23,12 @@ userid = '695328763960885269'
 myname = "Fishy.py"
 sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=355520&scope=bot"
 #bot = commands.Bot(command_prefix=["=",";","f!","fishy "],description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
-bot = commands.Bot(command_prefix=commands.when_mentioned_or(','),description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
+bot = commands.Bot(command_prefix=commands.when_mentioned_or('fishy ','f!','=',';'),description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
 bot.remove_command('help')
 initial_extensions = ['cogs.funnypicture','cogs.FishyServerTools','cogs.Meta','jishaku']
 
 #BOT#VARS#####################################################################################################
-bot.testing = True
+bot.testing = False
 bot.time_started = time.localtime()
 bot.version = '1.0.2'
 bot.newstext = None
