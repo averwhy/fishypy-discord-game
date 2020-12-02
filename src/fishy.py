@@ -826,7 +826,7 @@ async def invite(ctx):
     await ctx.send(sinvite)
 
 @commands.check(ban_check)
-@bot.command(aliases=["p","me"])
+@bot.command(aliases=["prof","me"])
 async def profile(ctx, user: discord.User = None): # profile command
     dbuser = db_user()
     tfish = fishing()
