@@ -44,12 +44,12 @@ class Meta(commands.Cog):
         embed.add_field(name="Fish caught since start", value=f"{self.bot.fishCaughtinsession}")
         embed.add_field(name="XP Gained in session",value = f"{round(self.bot.xpgainedinsession,3)}")
         embed.add_field(name="Commands run in session",value=self.bot.commandsRun)
-        embed.add_field(name="Command Errors",value=(self.bot.defaultprefixcommandsRun - self.bot.commandsActuallyRun))
+        embed.add_field(name="Command Errors",value=(self.bot.commandsRun - self.bot.commandsActuallyRun))
         embed.add_field(name="Ping", value=f"{round(ping, 3)}ms")
         embed.add_field(name="Github link", value="https://github.com/averwhy/fishy-discord-game")
         await ctx.send(embed=embed)
         
-    @commands.cooldown(1,60,BucketType.channel)
+    @commands.cooldown(1,40,BucketType.channel)
     @commands.command()
     async def about(self,ctx):
         embed = discord.Embed(title=f"**About Fishy.py**", description="", colour=discord.Colour(0x158b94))
