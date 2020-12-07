@@ -20,8 +20,8 @@ class Meta(commands.Cog):
             
     @commands.command()
     async def news(self,ctx, *,setnews = None): # for this, the news is a botvar so it doesnt get boned on cog reload
-        if self.bot.defaultprefixsetnews == None:
-            embed = discord.Embed(title="Fishy.py News",description=self.bot.newstext,colour=discord.Colour(0x158b94))
+        if self.bot.setnews == None:
+            embed = discord.Embed(title="Fishy.py News",description=self.bot.newstext,colour=discord.Colour.random())
             embed.set_footer(text=f"News set by {self.bot.news_set_by}")
             await ctx.send(embed=embed)
         elif ctx.author.id == OWNER_ID:
