@@ -40,6 +40,7 @@ bot.xpgainedinsession = 0
 bot.commandsRun = 0
 bot.commandsActuallyRun = 0
 bot.defaultprefix = "="
+bot.xp_multiplier = 2
 ##############################################################################################################
 helpmsg = f"""```md
 React on message to fish
@@ -240,6 +241,7 @@ class db_user:
         ##################################
         xptoadd = updatevalue / 100
         bot.xpgainedinsession += xptoadd
+        xptoadd = xptoadd x bot.xp_multiplier
         updatevalue = theirlevel + xptoadd
         newlevel = divmod(float(updatevalue),1)
         newlevelint = int(newlevel[0])
@@ -590,14 +592,14 @@ async def fish(ctx): # the fishing command. this consists of 1. checking if the 
             currentxp = user.get_xp(userdata)
             levelbar = await rodUpgradebar(userdata[3])
             embed.set_footer(text=f"{round(currentxp,3)}/1 XP [{levelbar}]",icon_url=(ctx.author.avatar_url))
-            embed.add_field(name="__**XP Gained**__", value=f"{xp2}")
+            embed.add_field(name="__**XP Gained**__", value=f"{xp2} **x2**")
             embed.add_field(name="__**Rarity**__",value=f"{raritycalc2}")
             embed.add_field(name="__**Length**__", value=f"{returnedlist[4]}cm")
             embed.add_field(name="__**# in database**__", value=f"{returnedlist[3]}/16205 fishes")
             embed.set_image(url=returnedlist[1])
             await msgtoedit.edit(embed=embed)
             print(f"{ctx.author.name} caught a {returnedlist[5]} in channel #{ctx.channel.name}, guild {ctx.guild.name} [user: {ctx.author.id}, channel {ctx.channel.id}, guild {ctx.guild.id}]")
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
             await fish.reset_cooldown(ctx) # remove 7 second cooldown
 
 @commands.check(ban_check)
