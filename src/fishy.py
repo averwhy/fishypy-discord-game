@@ -241,7 +241,7 @@ class db_user:
         ##################################
         xptoadd = updatevalue / 100
         bot.xpgainedinsession += xptoadd
-        xptoadd = xptoadd x bot.xp_multiplier
+        xptoadd = xptoadd * bot.xp_multiplier
         updatevalue = theirlevel + xptoadd
         newlevel = divmod(float(updatevalue),1)
         newlevelint = int(newlevel[0])
