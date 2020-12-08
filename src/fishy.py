@@ -30,6 +30,7 @@ initial_extensions = ['cogs.funnypicture','cogs.FishyServerTools','cogs.Meta','j
 #BOT#VARS#####################################################################################################
 bot.testing = False
 bot.time_started = time.localtime()
+bot.launch_time = datetime.utcnow()
 bot.version = '1.0.2'
 bot.newstext = None
 bot.news_set_by = "no one yet.."
