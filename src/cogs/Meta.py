@@ -34,7 +34,7 @@ class Meta(commands.Cog):
     @commands.cooldown(1,15,BucketType.user)
     @commands.command()
     async def info(self,ctx): # info thing
-        delta_uptime = datetime.utcnow() - bot.launch_time
+        delta_uptime = datetime.utcnow() - self.bot.launch_time
         hours, remainder = divmod(int(delta_uptime.total_seconds()), 3600)
         minutes, seconds = divmod(remainder, 60)
         days, hours = divmod(hours, 24)
