@@ -1,6 +1,7 @@
 import discord
 import platform
 import time
+from datetime import datetime
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
@@ -20,31 +21,34 @@ class Meta(commands.Cog):
             
     @commands.command()
     async def news(self,ctx, *,setnews = None): # for this, the news is a botvar so it doesnt get boned on cog reload
-        if self.bot.setnews == None:
-            embed = discord.Embed(title="Fishy.py News",description=self.bot.newstext,colour=discord.Colour.random())
-            embed.set_footer(text=f"News set by {self.bot.news_set_by}")
-            await ctx.send(embed=embed)
-        elif ctx.author.id == OWNER_ID:
+        if ctx.author.id == OWNER_ID and setnews is None:
             self.bot.newstext = setnews
             self.bot.news_set_by = str(ctx.author.name)
             await ctx.message.add_reaction("\U00002705")
             await ctx.send("`News was set succesfully!`")
+            
+        embed = discord.Embed(title="Fishy.py News",description=self.bot.newstext,colour=discord.Colour.random())
+        embed.set_footer(text=f"News set by {self.bot.news_set_by}")
+        await ctx.send(embed=embed)
         else:
             await ctx.message.add_reaction("\U0000274c")
             await ctx.send("`Something went wrong. Make sure to provide no params while using news command.`")
             
-    @commands.cooldown(1,30,BucketType.user)
+    @commands.cooldown(1,15,BucketType.user)
     @commands.command()
     async def info(self,ctx): # info thing
+        delta_uptime = datetime.utcnow() - bot.launch_time
+        hours, remainder = divmod(int(delta_uptime.total_seconds()), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        days, hours = divmod(hours, 24)
         ping = self.bot.latency * 1000
         embed = discord.Embed(title=f"**Info**", description="", colour=discord.Colour(0x158b94))
-        embed.set_author(name=f"Requested by {ctx.author.name}")
         embed.set_footer(text=f"Made with Python {platform.python_version()} + discord.py {discord.__version__}",icon_url="https://images-ext-1.discordapp.net/external/0KeQjRAKFJfVMXhBKPc4RBRNxlQSiieQtbSxuPuyfJg/http/i.imgur.com/5BFecvA.png")
-        embed.add_field(name="Time started", value=time.strftime("%m-%d-%Y, %I:%M:%S EST",self.bot.time_started))
+        embed.add_field(name="Uptime", value=f"{days}d, {hours}h, {minutes}m, {seconds}s ago")
         embed.add_field(name="Fish caught since start", value=f"{self.bot.fishCaughtinsession}")
         embed.add_field(name="XP Gained in session",value = f"{round(self.bot.xpgainedinsession,3)}")
         embed.add_field(name="Commands run in session",value=self.bot.commandsRun)
-        embed.add_field(name="Command Errors",value=(self.bot.commandsRun - self.bot.commandsActuallyRun))
+        embed.add_field(name="Command Errors",value=(self.bot.commandsFailed))
         embed.add_field(name="Ping", value=f"{round(ping, 3)}ms")
         embed.add_field(name="Github link", value="https://github.com/averwhy/fishy-discord-game")
         await ctx.send(embed=embed)
