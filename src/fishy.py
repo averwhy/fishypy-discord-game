@@ -38,9 +38,9 @@ bot.socket_recieved_counter = 0
 bot.fishCaughtinsession = 0
 bot.xpgainedinsession = 0
 bot.commandsRun = 0
-bot.commandsActuallyRun = 0
+bot.commandsFailed = 0
 bot.defaultprefix = "="
-bot.xp_multiplier = 2
+bot.xp_multiplier = 1
 ##############################################################################################################
 helpmsg = f"""```md
 React on message to fish
@@ -240,8 +240,8 @@ class db_user:
         oldxp = theirlevel2[1]
         ##################################
         xptoadd = updatevalue / 100
-        bot.xpgainedinsession += xptoadd
         xptoadd = xptoadd * bot.xp_multiplier
+        bot.xpgainedinsession += xptoadd
         updatevalue = theirlevel + xptoadd
         newlevel = divmod(float(updatevalue),1)
         newlevelint = int(newlevel[0])
@@ -458,6 +458,7 @@ async def is_in_guild(ctx):
 
 @bot.event
 async def on_command_error(ctx, error): # this is an event that runs when there is an error
+    bot.commandsFailed += 1
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         #await ctx.message.add_reaction("\U00002753") # red question mark         
         return
@@ -517,10 +518,6 @@ async def on_guild_join(guild):
 @bot.event
 async def on_command(ctx):
     bot.commandsRun += 1
-
-@bot.event
-async def on_command_completion(ctx):
-    bot.commandsActuallyRun += 1
 
 @bot.command(aliases=["cmds","cmd","command","commands","?"])
 async def help(ctx): # help message
@@ -592,7 +589,7 @@ async def fish(ctx): # the fishing command. this consists of 1. checking if the 
             currentxp = user.get_xp(userdata)
             levelbar = await rodUpgradebar(userdata[3])
             embed.set_footer(text=f"{round(currentxp,3)}/1 XP [{levelbar}]",icon_url=(ctx.author.avatar_url))
-            embed.add_field(name="__**XP Gained**__", value=f"{xp2} **x2**")
+            embed.add_field(name="__**XP Gained**__", value=f"{xp2}")
             embed.add_field(name="__**Rarity**__",value=f"{raritycalc2}")
             embed.add_field(name="__**Length**__", value=f"{returnedlist[4]}cm")
             embed.add_field(name="__**# in database**__", value=f"{returnedlist[3]}/16205 fishes")
