@@ -21,18 +21,15 @@ class Meta(commands.Cog):
             
     @commands.command()
     async def news(self,ctx, *,setnews = None): # for this, the news is a botvar so it doesnt get boned on cog reload
-        if ctx.author.id == OWNER_ID and setnews is None:
+        if ctx.author.id == OWNER_ID and setnews is not None:
             self.bot.newstext = setnews
             self.bot.news_set_by = str(ctx.author.name)
             await ctx.message.add_reaction("\U00002705")
             await ctx.send("`News was set succesfully!`")
-            
+            return
         embed = discord.Embed(title="Fishy.py News",description=self.bot.newstext,colour=discord.Colour.random())
         embed.set_footer(text=f"News set by {self.bot.news_set_by}")
         await ctx.send(embed=embed)
-        else:
-            await ctx.message.add_reaction("\U0000274c")
-            await ctx.send("`Something went wrong. Make sure to provide no params while using news command.`")
             
     @commands.cooldown(1,15,BucketType.user)
     @commands.command()
