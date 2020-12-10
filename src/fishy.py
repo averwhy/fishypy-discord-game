@@ -1006,6 +1006,7 @@ async def trophy(ctx, user: discord.User = None):
                 embed.set_image(url=data[1])
                 f = fishing()
                 raritycalc = f.calculate_rarity(data[4])
+                dbPos = data[3]
                 embed.add_field(name=tvalue,value=f"{raritycalc}({data[4]} cm), #{dbPos} in database")
             
             await ctx.send(embed=embed)
@@ -1024,6 +1025,7 @@ async def trophy(ctx, user: discord.User = None):
                 embed.set_image(url=data[1])
                 f = fishing()
                 raritycalc = f.calculate_rarity(data[4])
+                dbPos = data[3]
                 embed.add_field(name=tvalue,value=f"{raritycalc}({data[4]} cm), #{dbPos} in database")
             
             await ctx.send(embed=embed)
