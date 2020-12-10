@@ -599,7 +599,7 @@ async def fish(ctx): # the fishing command. this consists of 1. checking if the 
             await msgtoedit.edit(embed=embed)
             print(f"{ctx.author.name} caught a {returnedlist[5]} in channel #{ctx.channel.name}, guild {ctx.guild.name} [user: {ctx.author.id}, channel {ctx.channel.id}, guild {ctx.guild.id}]")
             await asyncio.sleep(1)
-            await fish.reset_cooldown(ctx) # remove 7 second cooldown
+            fish.reset_cooldown(ctx) # remove 7 second cooldown
 
 @commands.check(ban_check)
 @commands.cooldown(1,30,BucketType.user)
@@ -1004,18 +1004,9 @@ async def trophy(ctx, user: discord.User = None):
                 embed = discord.Embed(title=f"{ctx.message.author.name}'s Trophy",url=data[1],colour=discord.Colour(0x00cc00))
                 tvalue = (f"**{data[5]}** at **{data[4]}cm**")
                 embed.set_image(url=data[1])
-                raritycalc = float(data[2])
-                dbPos = data[3]
-                raritycalc2 = None
-                if raritycalc > 1.5:
-                    raritycalc2 = "Legendary"
-                elif raritycalc > 1.2:
-                    raritycalc2 = "Rare"
-                elif raritycalc > 0.7:
-                    raritycalc2 = "Uncommon"
-                elif raritycalc > 0:
-                    raritycalc2 = "Common"
-                embed.add_field(name=tvalue,value=f"{raritycalc2}({data[2]}), #{dbPos} in database")
+                f = fishing()
+                raritycalc = f.calculate_rarity(data[4])
+                embed.add_field(name=tvalue,value=f"{raritycalc}({data[4]} cm), #{dbPos} in database")
             
             await ctx.send(embed=embed)
     elif user is not None:
@@ -1028,21 +1019,12 @@ async def trophy(ctx, user: discord.User = None):
             if data is None:
                 embed = discord.Embed(title=f"You dont have a Trophy!",description="Try Fishing!")
             else: 
-                embed = discord.Embed(title=f"{ctx.message.author.name}'s Trophy",colour=discord.Colour(0x00cc00))
+                embed = discord.Embed(title=f"{user.name}'s Trophy",colour=discord.Colour(0x00cc00))
                 tvalue = (f"**{data[5]}** at **{data[4]}cm**")
                 embed.set_image(url=data[1])
-                raritycalc = float(data[2])
-                dbPos = data[3]
-                raritycalc2 = None
-                if raritycalc > 1.5:
-                    raritycalc2 = "Legendary"
-                elif raritycalc > 1.2:
-                    raritycalc2 = "Rare"
-                elif raritycalc > 0.7:
-                    raritycalc2 = "Uncommon"
-                elif raritycalc > 0:
-                    raritycalc2 = "Common"
-                embed.add_field(name=tvalue,value=f"{raritycalc2}({data[2]}), #{dbPos} in database")
+                f = fishing()
+                raritycalc = f.calculate_rarity(data[4])
+                embed.add_field(name=tvalue,value=f"{raritycalc}({data[4]} cm), #{dbPos} in database")
             
             await ctx.send(embed=embed)
 
