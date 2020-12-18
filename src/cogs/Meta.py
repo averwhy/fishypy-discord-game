@@ -24,7 +24,7 @@ class Meta(commands.Cog):
     async def news(self,ctx, *,setnews = None): # for this, the news is a botvar so it doesnt get boned on cog reload
         if ctx.author.id == OWNER_ID and setnews is not None:
             self.bot.newstext = setnews
-            self.bot.news_set_by = str(ctx.author.name)
+            self.bot.news_set_by = f"[Developer] {ctx.author.name}"
             await ctx.message.add_reaction("\U00002705")
             await ctx.send("`News was set succesfully!`")
             return
@@ -41,7 +41,7 @@ class Meta(commands.Cog):
         days, hours = divmod(hours, 24)
         embed = discord.Embed(title=f"**Info**", description="", colour=discord.Colour(0x158b94))
         embed.set_footer(text=f"Made with Python {platform.python_version()} + enhanced discord.py {discord.__version__}",icon_url="https://images-ext-1.discordapp.net/external/0KeQjRAKFJfVMXhBKPc4RBRNxlQSiieQtbSxuPuyfJg/http/i.imgur.com/5BFecvA.png")
-        embed.add_field(name="Uptime", value=f"{days}d, {hours}h, {minutes}m, {seconds}s ago")
+        embed.add_field(name="Uptime", value=f"```autohotkey\n{days}d, {hours}h, {minutes}m, {seconds}s```")
         embed.add_field(name="Fish caught since start", value=f"{self.bot.fishCaughtinsession}")
         embed.add_field(name="XP Gained in session",value = f"{round(self.bot.xpgainedinsession,3)}")
         embed.add_field(name="Commands run in session",value=self.bot.commandsRun)

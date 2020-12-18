@@ -22,17 +22,16 @@ with open("TOKEN.txt",'r') as t:
     TOKEN = t.readline()
 userid = '695328763960885269'
 myname = "Fishy.py"
-sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=355520&scope=bot"
+sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=289856&scope=bot"
 #bot = commands.Bot(command_prefix=["=",";","f!","fishy "],description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('fishy ','f!','='),description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
+bot = commands.Bot(command_prefix=commands.when_mentioned_or('fishy ', 'fpy ','f!','='),description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
 bot.remove_command('help')
 initial_extensions = ['cogs.funnypicture','cogs.FishyServerTools','cogs.Meta','jishaku']
 
 #BOT#VARS#####################################################################################################
-bot.testing = False
 bot.time_started = time.localtime()
 bot.launch_time = datetime.utcnow()
-bot.version = '1.0.3'
+bot.version = '1.0.4'
 bot.newstext = None
 bot.news_set_by = "no one yet.."
 bot.socket_sent_counter = 0
@@ -42,7 +41,7 @@ bot.xpgainedinsession = 0
 bot.commandsRun = 0
 bot.commandsFailed = 0
 bot.defaultprefix = "="
-bot.xp_multiplier = 1.5
+bot.xp_multiplier = 1.0
 ##############################################################################################################
 helpmsg = f"""```md
 React on message to fish
@@ -51,11 +50,12 @@ Compete with others for best collection
 [{bot.defaultprefix}start][register yourself to the db]
 [{bot.defaultprefix}fish|f][fish with Fishy.py]
 [{bot.defaultprefix}about][learn more about Fishy.py]
-[{bot.defaultprefix}profile|p][your profile and stats, or someone elses]
+[{bot.defaultprefix}profile|prof][your profile and stats, or someone elses]
 [{bot.defaultprefix}trophy][your trophy, or someone elses]
 [{bot.defaultprefix}guild][view guild profile]
-[{bot.defaultprefix}top|t (guilds,users)][Leaderboards]
+[{bot.defaultprefix}top|t (guilds,users)][user and guild leaderboards]
 [{bot.defaultprefix}info][info and stats about bot]
+[{bot.defaultprefix}ping][show my latency to discord]
 [{bot.defaultprefix}review][leave a review for the bot :) ]
 [{bot.defaultprefix}invite][invite bot to your server]
 [{bot.defaultprefix}support][join the fishy.py discord server]
