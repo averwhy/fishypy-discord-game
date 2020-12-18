@@ -5,6 +5,7 @@ from datetime import datetime
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
+import aiosqlite
 OWNER_ID = 267410788996743168
 
 class Meta(commands.Cog):
@@ -38,17 +39,34 @@ class Meta(commands.Cog):
         hours, remainder = divmod(int(delta_uptime.total_seconds()), 3600)
         minutes, seconds = divmod(remainder, 60)
         days, hours = divmod(hours, 24)
-        ping = self.bot.latency * 1000
         embed = discord.Embed(title=f"**Info**", description="", colour=discord.Colour(0x158b94))
-        embed.set_footer(text=f"Made with Python {platform.python_version()} + discord.py {discord.__version__}",icon_url="https://images-ext-1.discordapp.net/external/0KeQjRAKFJfVMXhBKPc4RBRNxlQSiieQtbSxuPuyfJg/http/i.imgur.com/5BFecvA.png")
+        embed.set_footer(text=f"Made with Python {platform.python_version()} + enhanced discord.py {discord.__version__}",icon_url="https://images-ext-1.discordapp.net/external/0KeQjRAKFJfVMXhBKPc4RBRNxlQSiieQtbSxuPuyfJg/http/i.imgur.com/5BFecvA.png")
         embed.add_field(name="Uptime", value=f"{days}d, {hours}h, {minutes}m, {seconds}s ago")
         embed.add_field(name="Fish caught since start", value=f"{self.bot.fishCaughtinsession}")
         embed.add_field(name="XP Gained in session",value = f"{round(self.bot.xpgainedinsession,3)}")
         embed.add_field(name="Commands run in session",value=self.bot.commandsRun)
         embed.add_field(name="Command Errors",value=(self.bot.commandsFailed))
-        embed.add_field(name="Ping", value=f"{round(ping, 3)}ms")
         embed.add_field(name="Github link", value="https://github.com/averwhy/fishy-discord-game")
         await ctx.send(embed=embed)
+    
+    @commands.command()
+    async def ping(self, ctx):
+        em = discord.PartialEmoji(name="loading",animated=True,id=782995523404562432)
+        start = time.perf_counter()
+        message = await ctx.send(embed=discord.Embed(title=f"Ping... {em}",color=discord.Color.random()))
+        end = time.perf_counter()
+        start2 = time.perf_counter()
+        async with aiosqlite.connect("fishypy.db")as db:
+            await db.commit()
+        end2 = time.perf_counter()
+        duration = round(((end - start) * 1000),1)
+        db_duration = round(((end2 - start2) * 1000),1)
+        newembed = discord.Embed(title="Pong!",color=discord.Color.random())
+        ws = round((self.bot.latency * 1000),1)
+        newembed.add_field(name="Typing",value=f"{duration}ms")
+        newembed.add_field(name="Websocket",value=f"{ws}ms")
+        newembed.add_field(name="Database",value=f"{db_duration}ms")
+        await message.edit(embed=newembed)
         
     @commands.cooldown(1,40,BucketType.channel)
     @commands.command()

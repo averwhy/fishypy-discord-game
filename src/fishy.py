@@ -24,7 +24,7 @@ userid = '695328763960885269'
 myname = "Fishy.py"
 sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=355520&scope=bot"
 #bot = commands.Bot(command_prefix=["=",";","f!","fishy "],description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('fishy ','f!','=',';'),description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
+bot = commands.Bot(command_prefix=commands.when_mentioned_or('fishy ','f!','='),description=description,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
 bot.remove_command('help')
 initial_extensions = ['cogs.funnypicture','cogs.FishyServerTools','cogs.Meta','jishaku']
 
@@ -32,7 +32,7 @@ initial_extensions = ['cogs.funnypicture','cogs.FishyServerTools','cogs.Meta','j
 bot.testing = False
 bot.time_started = time.localtime()
 bot.launch_time = datetime.utcnow()
-bot.version = '1.0.2'
+bot.version = '1.0.3'
 bot.newstext = None
 bot.news_set_by = "no one yet.."
 bot.socket_sent_counter = 0
@@ -42,7 +42,7 @@ bot.xpgainedinsession = 0
 bot.commandsRun = 0
 bot.commandsFailed = 0
 bot.defaultprefix = "="
-bot.xp_multiplier = 1
+bot.xp_multiplier = 1.5
 ##############################################################################################################
 helpmsg = f"""```md
 React on message to fish
@@ -460,7 +460,6 @@ async def is_in_guild(ctx):
 
 @bot.event
 async def on_command_error(ctx, error): # this is an event that runs when there is an error
-    bot.commandsFailed += 1
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         #await ctx.message.add_reaction("\U00002753") # red question mark         
         return
@@ -492,6 +491,7 @@ async def on_command_error(ctx, error): # this is an event that runs when there 
         await ctx.send(f"`ERROR: Sorry, you can only run this command in a guild. Right now you are DM'ing me!`")
         return
     else:
+        bot.comandsFailed += 1
         # All other Errors not returned come here. And we can just print the default TraceBack.
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
@@ -591,7 +591,10 @@ async def fish(ctx): # the fishing command. this consists of 1. checking if the 
             currentxp = user.get_xp(userdata)
             levelbar = await rodUpgradebar(userdata[3])
             embed.set_footer(text=f"{round(currentxp,3)}/1 XP [{levelbar}]",icon_url=(ctx.author.avatar_url))
-            embed.add_field(name="__**XP Gained**__", value=f"{xp2}")
+            if bot.xp_multiplier == 1.0:
+                embed.add_field(name="__**XP Gained**__", value=f"{xp2}")
+            else:
+                embed.add_field(name="__**XP Gained**__", value=f"{xp2} **x{bot.xp_multiplier}**")
             embed.add_field(name="__**Rarity**__",value=f"{raritycalc2}")
             embed.add_field(name="__**Length**__", value=f"{returnedlist[4]}cm")
             embed.add_field(name="__**# in database**__", value=f"{returnedlist[3]}/16205 fishes")
@@ -606,6 +609,7 @@ async def fish(ctx): # the fishing command. this consists of 1. checking if the 
 @bot.group(invoke_without_command=True, aliases=["t","lb","leaderboard"])
 async def top(ctx): # command used to display top users, or top guilds
     await ctx.send("`Avaliable subcommands: users, guilds`")
+    top.reset_cooldown(ctx)
 
 @top.group()
 async def guilds(ctx):
@@ -778,19 +782,21 @@ async def gld(ctx, newguild: int = None):
                 await askmessage.edit(content=f"Something went wrong: ```\n{m}\n```")
 
 @commands.check(is_owner) # <-- temp
-@commands.cooldown(1,70,BucketType.user)
+@commands.cooldown(1,30,BucketType.user)
 @customize.command()
 async def color(ctx,hexcolor : str = None): # WIP
     authorid = ctx.message.author.id
-    checkuser = await usercheck(authorid)
-    if checkuser == False:
+    checkuser = await usercheck(ctx.author.id)
+    if checkuser is False:
         await ctx.send(f"`I was unable to retrieve your profile. Have you done {bot.defaultprefix}start yet?`")
+        return
     checkuser = await usercheck(authorid)
     hexcolor = hexcolor.upper()
     newhexcolor = int((f"0x{hexcolor}"),0)
     print(newhexcolor)
     if hexcolor is None:
         await ctx.send("`Please provide a valid hex color value! (Without the #)`")
+        return
     else:
         # try:
         embed = discord.Embed(title="<-- Theres a preview of your chosen color!", description=f"**Are you sure you would like to change your profile color to hex value {hexcolor}?**", colour=discord.Color(newhexcolor))
@@ -808,6 +814,7 @@ async def color(ctx,hexcolor : str = None): # WIP
                 pass
             mbed = discord.Embed(title="Timed out :(", description=f"Try again?", colour=discord.Colour(0xfcd703))
             await askmessage.edit(embed=mbed)
+            return
         else:
             try:
                 await askmessage.clear_reactions()
@@ -824,107 +831,63 @@ async def color(ctx,hexcolor : str = None): # WIP
 
 @bot.command()
 async def invite(ctx):
-    await ctx.send(sinvite)
+    await ctx.send(f"<{sinvite}>")
 
 @commands.check(ban_check)
 @bot.command(aliases=["prof","me"])
 async def profile(ctx, user: discord.User = None): # profile command
     dbuser = db_user()
     tfish = fishing()
-    authorid = ctx.message.author.id
-    authorname = ctx.message.author.name
     c_f =  str(discord.PartialEmoji(name="common_fish", id=770254565777866782, animated=False))
     uc_f =  str(discord.PartialEmoji(name="uncommon_fish", id=770254565642731531, animated=False))
     r_f =  str(discord.PartialEmoji(name="rare_fish", id=770254565462376459, animated=False))
     l_f =  str(discord.PartialEmoji(name="legendary_fish", id=770254565793857537, animated=False))
     m_f =  str(discord.PartialEmoji(name="mythical_fish", id=770254565852315658, animated=False))
     if user is None:
-        checkuser = await usercheck(authorid)
-        if checkuser is not False:
-            returnedlist = await grab_db_user(authorid)
-            theirguildid = int(returnedlist[5])
-            newhexcolor = int((f"0x{returnedlist[6]}"),0)
-            embed = discord.Embed(title=f"**{returnedlist[1]}**", description=f"*ID:{returnedlist[0]}*", colour=discord.Colour(newhexcolor))
-            embed.set_footer(text=f"Fishy.py - v{bot.version}",icon_url=(bot.user.avatar_url))
-            users_levelandxp = returnedlist[3]
-            users_levelandxp = float(users_levelandxp)
-            levelmath = divmod(users_levelandxp,1)
-            user_level = levelmath[0]
-            embed.add_field(name="User Level", value=f"{int(user_level)}")
-            embed.add_field(name="XP",value=f"{round(levelmath[1],3)}")
-            embed.add_field(name="Total fish caught", value=f"{int(returnedlist[2])}")
-            async with aiosqlite.connect("fishypy.db") as db:
-                c = await db.execute(f"SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY Level DESC) AS Level FROM fishyusers) a WHERE userid = '{authorid}';") # i love this statement
-                data1 = await c.fetchone()
-                c = await db.execute("SELECT * FROM fishyusers")
-                data2 = await c.fetchall()
-                await db.commit()
-                 
-            embed.add_field(name="Rank", value=f"#{data1[1]} out of {len(data2)} users")
-            try:
-                returnedusersguild = bot.get_guild(theirguildid)
-                if returnedusersguild is None:
-                    returnedusersguild = await bot.fetch_guild(theirguildid)
-                embed.add_field(name="Guild", value=f"{returnedusersguild.name}")
-            except discord.errors.Forbidden:
-                embed.add_field(name="Guild", value=f"The bot is no longer in this guild, therefore i cannot get it's information.")
-            embed.add_field(name="Caught fish per type",value=f"{c_f}:{returnedlist[8]}      {uc_f}:{returnedlist[9]}      {r_f}:{returnedlist[10]}      {l_f}:{returnedlist[11]}      {m_f}:{returnedlist[12]}",inline=False)
-            trophyOID = returnedlist[4]
-            tdata = await grab_db_user(authorid)
-            data = await dbuser.get_trophy(data=tdata)
-            if data is None:
-                tvalue = "You have no Trophy! Try fishing!"
-            else:
-                tvalue = (f"**{data[5]}** at **{data[4]}cm**")
-                embed.set_image(url=data[1])
-            embed.add_field(name="Trophy", value=f"{tvalue}",inline=False)
-            embed.set_thumbnail(url=ctx.author.avatar_url)
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send(f"`I was unable to retrieve your profile. Have you done {bot.defaultprefix}start yet?`")
+        user = ctx.author
+    checkuser = await usercheck(user.id)
+    if checkuser is False:
+        await ctx.send(f"`I was unable to retrieve your profile. Have you done {bot.defaultprefix}start yet?`")
+        return
+    returnedlist = await grab_db_user(user.id)
+    theirguildid = int(returnedlist[5])
+    newhexcolor = int((f"0x{returnedlist[6]}"),0)
+    embed = discord.Embed(title=f"**{returnedlist[1]}**", description=f"*ID:{returnedlist[0]}*", colour=discord.Colour(newhexcolor))
+    embed.set_footer(text=f"Fishy.py - v{bot.version}",icon_url=(bot.user.avatar_url))
+    users_levelandxp = returnedlist[3]
+    users_levelandxp = float(users_levelandxp)
+    levelmath = divmod(users_levelandxp,1)
+    user_level = levelmath[0]
+    embed.add_field(name="User Level", value=f"{int(user_level)}")
+    embed.add_field(name="XP",value=f"{round(levelmath[1],3)}")
+    embed.add_field(name="Total fish caught", value=f"{int(returnedlist[2])}")
+    async with aiosqlite.connect("fishypy.db") as db:
+        c = await db.execute("SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY Level DESC) AS Level FROM fishyusers) a WHERE userid = ?",(user.id,)) # i love this statement
+        data1 = await c.fetchone()
+        c = await db.execute("SELECT * FROM fishyusers")
+        data2 = await c.fetchall()
+        await db.commit()
+        
+    embed.add_field(name="Rank", value=f"#{data1[1]} out of {len(data2)} users")
+    try:
+        returnedusersguild = bot.get_guild(theirguildid)
+        if returnedusersguild is None:
+            returnedusersguild = await bot.fetch_guild(theirguildid)
+        embed.add_field(name="Guild", value=f"{returnedusersguild.name}")
+    except discord.errors.Forbidden:
+        embed.add_field(name="Guild", value=f"The bot is no longer in this guild, therefore i cannot get it's information.")
+    embed.add_field(name="Caught fish per type",value=f"{c_f}:{returnedlist[8]}      {uc_f}:{returnedlist[9]}      {r_f}:{returnedlist[10]}      {l_f}:{returnedlist[11]}      {m_f}:{returnedlist[12]}",inline=False)
+    trophyOID = returnedlist[4]
+    tdata = await grab_db_user(user.id)
+    data = await dbuser.get_trophy(data=tdata)
+    if data is None:
+        tvalue = "You have no Trophy! Try fishing!"
     else:
-        authorid = user.id # this is the key difference between this else and if above
-        checkuser = await usercheck(authorid)
-        if checkuser is not False:
-            returnedlist = await grab_db_user(authorid)
-            theirguildid = int(returnedlist[5])
-            #print(theirguildid)
-            returnedusersguild = bot.get_guild(theirguildid)
-
-            embed = discord.Embed(title=f"**{returnedlist[1]}**", description=f"*ID:{returnedlist[0]}*", colour=discord.Colour(0x242424))
-            embed.set_footer(text=f"Fishy.py - v{bot.version}",icon_url=(bot.user.avatar_url))
-            embed.add_field(name="Total fish caught", value=f"{int(returnedlist[2])}")
-
-            async with aiosqlite.connect("fishypy.db") as db:
-                c = await db.execute(f"SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY Level DESC) AS Level FROM fishyusers) a WHERE userid = '{authorid}';") # i love this statement
-                data1 = await c.fetchone()
-                c = await db.execute("SELECT * FROM fishyusers")
-                data2 = await c.fetchall()
-                await db.commit()
-                 
-            embed.add_field(name="Rank", value=f"#{data1[1]} out of {len(data2)} users")
-            users_levelandxp = returnedlist[3]
-            users_levelandxp = float(users_levelandxp)
-            levelmath = divmod(users_levelandxp,1)
-            # print(levelmath)
-            user_level = levelmath[0]
-            embed.add_field(name="User Level", value=f"{int(user_level)}")
-            embed.add_field(name="XP",value=f"{levelmath[1]}")
-            embed.add_field(name="Guild", value=f"{returnedusersguild.name} (ID:{returnedlist[6]})")
-            embed.add_field(name="Caught fish per type",value=f"{c_f}:{returnedlist[8]}      {uc_f}:{returnedlist[9]}      {r_f}:{returnedlist[10]}      {l_f}:{returnedlist[11]}      {m_f}:{returnedlist[12]}",inline=False)
-            trophyOID = returnedlist[4]
-            tdata = await grab_db_user(authorid)
-            data = await tfish.getfish(trophyOID)
-            if data is None:
-                tvalue = "You have no Trophy! Try fishing!"
-            else:
-                tvalue = (f"**{data[5]}** at **{data[4]}cm**")
-                embed.set_image(url=data[1])
-            embed.add_field(name="Trophy", value=f"{tvalue}",inline=False)
-            embed.set_thumbnail(url=user.avatar_url)
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send(f"`I was unable to retrieve that profile. They may not be in the database. If they are, double check that ID or name.`")
+        tvalue = (f"**{data[5]}** at **{data[4]}cm**")
+        embed.set_image(url=data[1])
+    embed.add_field(name="Trophy", value=f"{tvalue}",inline=False)
+    embed.set_thumbnail(url=user.avatar_url)
+    await ctx.send(embed=embed)
 
 @commands.check(ban_check)
 @commands.check(is_in_guild)
@@ -1029,9 +992,9 @@ async def trophy(ctx, user: discord.User = None):
                 embed.add_field(name=tvalue,value=f"{raritycalc}({data[4]} cm), #{dbPos} in database")
             
             await ctx.send(embed=embed)
-
-@bot.group(invoke_without_command=True)
+   
 @commands.check(is_owner)
+@bot.group(invoke_without_command=True)
 async def dev(ctx):
     #bot dev commands
     await ctx.send("`You're missing one of the below arguements:` ```md\n- reload\n- loadall\n- status <reason>\n- ban <user> <reason>\n```")
@@ -1081,6 +1044,9 @@ async def status(ctx, *, text):
     # Setting `Playing ` status
     if text is None:
         await ctx.send(f"{ctx.guild.me.status}")
+    if len(text) > 60:
+        await ctx.send("`Too long you pepega`")
+        return
     try:
         await bot.change_presence(activity=discord.Game(name=text))
         await ctx.message.add_reaction("\U00002705")
@@ -1207,7 +1173,7 @@ async def run(ctx, *, statement):
             await db.commit()
         await ctx.message.add_reaction(emoji="\U00002705")
     except Exception as e:
-        await ctx.send(f"```sql\n{e}\n```")
+        await ctx.send(f"```sql\n{e}\n```") 
     
 @bot.event
 async def on_ready():
