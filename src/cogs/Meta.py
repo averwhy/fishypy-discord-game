@@ -8,7 +8,7 @@ from discord.ext.commands import CheckFailure, check
 import aiosqlite
 OWNER_ID = 267410788996743168
 
-class Meta(commands.Cog):
+class meta(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
         
@@ -86,4 +86,4 @@ class Meta(commands.Cog):
         await ctx.send(embed=em)
             
 def setup(bot):
-    bot.add_cog(Meta(bot))
+    bot.add_cog(meta(bot))
