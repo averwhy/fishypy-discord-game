@@ -7,7 +7,7 @@ OWNER_ID = 267410788996743168
 async def is_owner(ctx):
     return ctx.author.id == OWNER_ID
 
-class funnypicture(commands.Cog):
+class funnypicture(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self,bot):
         self.bot = bot
     

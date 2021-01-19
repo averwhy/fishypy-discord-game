@@ -26,7 +26,7 @@ async def is_support_server(ctx):
     else:
         raise IsntSupportServer()
 
-class FishyServerTools(commands.Cog):
+class FishyServerTools(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self,bot):
         self.bot = bot
         self.issue = re.compile(r'##(?P<number>[0-9]+)') # thanks rapptz :)
