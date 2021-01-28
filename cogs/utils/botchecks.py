@@ -9,6 +9,9 @@ from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
 
+class FishNotFound(Exception):
+    pass
+
 class BanCheckError(CheckFailure):
     pass
 

@@ -1,5 +1,4 @@
 # pylint: disable=wrong-import-order, missing-function-docstring, invalid-name, broad-except, too-many-branches, too-many-statements, too-many-locals, 
-
 import platform
 import traceback
 import asyncio
@@ -7,48 +6,55 @@ import time
 import os, sys
 import aiosqlite
 import discord
+import math, random
+import typing
 from datetime import datetime
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
 
-from cogs.utils import player, server, fish, botchecks
+from cogs.utils import dbc, botchecks
 #BOT##########################################################################################################
-class MyContext(commands.Context):
+class FishyContext(commands.Context):
     #self = ctx
     async def send_in_codeblock(self, content, *, language: str = None):
         if language is None:
             lang = ''
         else:
             lang = language
-        await self.send(f"```{lang}\n{content}```")
+        return await self.send(f"```{lang}\n{content}```")
         
-    async def random_fish(self):
-        # self = ctx
-        # So self.bot == ctx.bot
-        c = await self.bot.db.execute("SELECT * FROM fishes ORDER BY RANDOM()")
-        data = await c.fetchone()
-        fishobject = fish.fish(data)
-        return fishobject
+    async def random_fish(self, rod_level):
+        fish_range = (0.8) * math.floor(rod_level)
+        c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes WHERE fishlength <= ?",(fish_range))
+        fish_in_range = (await c.fetchone())[0]
+        fish_range = math.floor(random.uniform(0,1) * fish_in_range)
+        cur = await self.bot.db.execute("SELECT * FROM fishes WHERE fishlength >= ? AND fishlength <= ? ORDER BY RANDOM();",(fish_range, math.floor(rod_level)))
+        fish = dbc.fish((await cur.fetchone()))
+        return fish
 
-class fpybot(commands.Bot): # Subclass of bot to give us methods
+class FpyBot(commands.Bot): # Subclass of bot to give us methods
     def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
     
-    async def get_context(self, message, *, cls=MyContext):
+    async def get_context(self, message, *, cls=FishyContext):
         return await super().get_context(message, cls=cls)
     
-    async def usercheck(self, authorid): # this function checks if the user exists in the DB
-        c = await self.db.execute("SELECT * FROM fishes ORDER BY RANDOM()")
-        data = await c.fetchone()
+    async def usercheck(self, user): # this function checks if the user exists in the DB
+        if isinstance(user, discord.User):
+            user = user.id
+        cur = await bot.db.execute("SELECT * FROM f_users WHERE userid = ?",(user,))
+        data = await cur.fetchone()
+        await bot.db.commit()
         if not data:
-            return False
-        return True
+            return True #In database
+        return False #Not in database
         
-    async def grab_db_user(self, uid):
-        c = await self.db.execute("SELECT * FROM f_users WHERE userid = ?",(uid,))
+    async def get_player(self, pid):
+        c = await self.db.execute("SELECT * FROM f_users WHERE userid = ?",(pid,))
         data = await c.fetchone()
-        return data
+        if not data: return data
+        return dbc.player(bot, data)
     
     async def randomfish(self): # Returns a random fish from the database.
         c = await self.db.execute('SELECT * FROM fishes ORDER BY RANDOM() LIMIT 1;')
@@ -70,9 +76,9 @@ sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874
 defaultprefix = '!!'
 async def get_prefix(bot, message):
     return bot.prefixes.get(message.guild.id, defaultprefix)
-bot = fpybot(command_prefix=get_prefix,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
+bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
 bot.remove_command('help')
-initial_extensions = ['jishaku', 'cogs.owner', 'cogs.funnypicture', 'cogs.FishyServerTools', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp']
+initial_extensions = ['jishaku', 'cogs.owner', 'cogs.funnypicture', 'cogs.FishyServerTools', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
 
 #BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168
@@ -95,11 +101,11 @@ bot.rodsbought = 0
 async def startup(bot):
     bot.db = await aiosqlite.connect('fpy.db')
     await bot.db.execute('CREATE TABLE IF NOT EXISTS f_prefixes (guildid int, prefix text)')
-    await bot.db.execute('CREATE TABLE IF NOT EXISTS f_users (userid integer, name text, guildid integer, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer)')
+    await bot.db.execute('CREATE TABLE IF NOT EXISTS f_users (userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer)')
     await bot.db.execute("CREATE TABLE IF NOT EXISTS f_bans (userid int, bannedwhen blob, reason text)")
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS collections (userid int, oid blob)")
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_rods (level int, name text, cost int)")
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_stats (totalfished int, totalcoins int, totalrodsbought)")
+    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_collections (userid int, oid blob)")
+    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_rods (level int, name text, cost int)") # Not for users
+    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_stats (totalfished int, totalcoinsearned int, totalrodsbought)")
     
     cur = await bot.db.execute('SELECT * FROM f_prefixes')
     bot.prefixes = {guild_id: prefix for guild_id, prefix in (await cur.fetchall())}

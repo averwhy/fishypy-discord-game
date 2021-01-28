@@ -9,13 +9,13 @@ rodnum = 0
 for c in categories:
     for r in rods1:
         rodnum += 1
-        price_increase = random.randint(55,105)
+        price_increase = random.randint(25,45)
         price += price_increase
         print(f"Rod {rodnum}. {r} {c} ({price} coins) Max length = {(rodnum * 3.5)}cm")
 
 for c2 in categories2:
     for r2 in rods2:
         rodnum += 1
-        price_increase = random.randint(20,25)
+        price_increase = random.randint(45,95)
         price += price_increase
         print(f"Rod {rodnum}. {r2} {c2} ({price} coins) Max length = {(rodnum * 3.5)}cm")

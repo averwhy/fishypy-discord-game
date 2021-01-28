@@ -14,7 +14,7 @@ class funnypicture(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.bot_has_permissions(embed_links=True)
     @commands.group(aliases=["fp"], invoke_without_command=True)
     async def funnypicture(self,ctx): # pretend this isnt here
-        await ctx.send(f"`Usage: {self.bot.defaultprefix}funnypicture [1,2,3,4,5]`")
+        await ctx.send_in_codeblock(f"Usage: {ctx.prefix}funnypicture [1,2,3,4,5,6]", language='prolog')
     
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1,30,BucketType.channel)

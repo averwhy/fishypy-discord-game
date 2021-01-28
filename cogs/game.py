@@ -10,7 +10,7 @@ from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
 
-from .utils import player, server, fish, botchecks
+from .utils import botchecks, dbc
 
 class game(commands.Cog):
     
@@ -25,25 +25,10 @@ class game(commands.Cog):
             '🐠':"https://cdn.discordapp.com/attachments/342953709870776322/509020495539077140/file.jpg",
             '🐋':"https://cdn.discordapp.com/attachments/342953709870776322/509020436118503446/file.jpg",
         }
-        
-    async def fish_success_update(self, author,guild,rarity,oid,flength): # this runs when the user fishes (successfully)
-        if guild is not None: # fix to dm fish
-            dbguild2 = server()
-            dbguild = await self.bot.grab_server(guild.id)
-            await dbguild2.update_caught_fish(guild)
-            await dbguild2.check_trophy(data=dbguild,caughtoid=oid)
-            
-        dbuser = await self.bot.grab_db_user(author.id)
-        
-        user = player(dbuser)
-        await user.update_caught_fish(userobject=author)
-        
-        await user.check_trophy(data=dbuser,caughtoid=oid)
-        
-        lvlbool = await user.update_xp(userobject=author,rarity=rarity)
-
-        bot.fishCaughtinsession += 1
-        return lvlbool
+    
+    @commands.Cog.listener()   
+    async def on_fish_catch(self, player, fish):
+        print(f"{player.name} caught a {fish.name}")
     
     def select_3_reactions(self):
         templist = self.image_list
@@ -61,12 +46,17 @@ class game(commands.Cog):
     
     async def stop_fishing(self, ctx, fishmsg):
         await fishmsg.add_reaction('🚫')
+        try:
+            self.bot.fishers.remove(ctx.author.id)
+        except: pass
+        
+    async def start_fishing(self, ctx, fishmsg):
+        self.bot.fishers.append(ctx.author.id)
     
     @commands.command(name="fish",description="fishy.py's fish game")
     async def fishbeta(self, ctx):
-        checkuser = await self.bot.usercheck(ctx.author.id)
-        if not checkuser:
-            return await ctx.send_in_codeblock(f"I was unable to retrieve your profile. Have you done {ctx.prefix}start yet?", language='css')
+        player = await self.bot.get_player(ctx.author.id)
+        if not player: return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         fishing = self.can_fish(ctx.author.id)
         while fishing:
             msg = None
@@ -103,6 +93,7 @@ class game(commands.Cog):
             await msg.add_reaction('✅')
             await asyncio.sleep(0.7)
             await msg.edit(content="they caught a fish", embed=None)
+            bot.dispatch("fish_catch", player, cfish)
         return
     
     @commands.check(botchecks.ban_check)

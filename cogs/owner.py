@@ -1,25 +1,27 @@
 import discord
 import platform
 import time
-from discord.ext import commands, tasks
+from discord.ext import commands, tasks, flags
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
 import asyncio
 import aiosqlite
+import random
 from datetime import datetime
 OWNER_ID = 267410788996743168
 
-class devtools(commands.Cog, command_attrs=dict(hidden=True)):
+class owner(commands.Cog, command_attrs=dict(hidden=True)):
     """
     Tools for the developer
     """
     def __init__(self,bot):
         self.bot = bot
+        self.dev.add_command(self.sql)
     
     async def cog_check(self,ctx):
         return ctx.author.id == OWNER_ID
         
-    @tasks.loop(minutes=10)
+    @tasks.loop(minutes=30)
     async def database_backup_task(self):
         try:
             await self.bot.db.commit()
@@ -29,13 +31,14 @@ class devtools(commands.Cog, command_attrs=dict(hidden=True)):
             await self.bot.backup_db.close()
             return
         except Exception as e:
-            print(f"An error occured while backing up the database:\n`{e}`")
+            print(f"An error occured while backing up the database: {e}")
             return
+        
     
     @commands.group(invoke_without_command=True,hidden=True)
     async def dev(self, ctx):
         #bot dev commands
-        await ctx.send("`You're missing one of the below arguements:` ```md\n- reload\n- loadall\n- status <reason>\n- ban <user> <reason>\n```")
+        await ctx.send_in_codeblock("Invalid subcommand", language='css')
 
     @dev.command(aliases=["r","reloadall"])
     async def reload(self, ctx):
@@ -97,85 +100,58 @@ class devtools(commands.Cog, command_attrs=dict(hidden=True)):
 
     @dev.command()
     async def stop(self, ctx):
-        askmessage = await ctx.send("`you sure?`")
-        def check(m):
-            newcontent = m.content.lower()
-            return newcontent == 'yea' and m.channel == ctx.channel and m.author.id == OWNER_ID
+        await ctx.send_in_codeblock("aight, seeya")
+        self.bot.fishers.clear()
+        await self.bot.db.commit()
+        await self.bot.db.close()
+        await self.bot.logout()
+        
+    @flags.add_flag("--fetchall", action='store_true')
+    @flags.add_flag("--fetchone", action='store_true')
+    @flags.add_flag("--fetchmany", type=int, default=0)
+    @flags.command()
+    async def sql(self, ctx, *, statement, **flags):
         try:
-            await self.bot.wait_for('message', timeout=5, check=check)
-        except asyncio.TimeoutError:
-            await askmessage.edit(content="`Timed out. haha why didnt you respond you idiot`")
-        else:
-            await ctx.send("`bye`")
-            print(f"Bot is being stopped by {ctx.message.author} ({ctx.message.id})")
-            await self.bot.db.commit()
-            await self.bot.db.close()
-            await self.bot.logout()
-        
-    @dev.command()
-    async def sql(self, ctx, *, statement):
-        try:
-            cur = await bot.db.execute(statement)
-            
-            
-            
-    @dev.group(invoke_without_command=True)
-    async def eco(self, ctx):
-        pass
-    
-    @eco.command()
-    async def reset(self, ctx, user: discord.User = None):
-        if user is None:
-            await ctx.send("Provide an user")
-            return
-        player = await self.bot.get_player(user.id)
-        if player is None:
-            await ctx.send("They're not even in the database...")
-            return
-        
-        await self.bot.db.execute("UPDATE e_users SET bal = 100 WHERE id = ?",(user.id,))
-        await ctx.send("Reset.")
-        
-    @eco.command()
-    async def give(self, ctx, user: discord.User, amount):
-        amount = float(amount)
-        player = await self.bot.get_player(user.id)
-        if player is None:
-            await ctx.send("They're not even in the database...")
-            return
-        
-        await self.bot.db.execute("UPDATE e_users SET bal = (bal + ?) WHERE id = ?",(amount, user.id,))
-        await ctx.send(f"Success.\nNew balance: ${(player[3] + amount)}")
-    
-    @eco.command(name="set")
-    async def setamount(self, ctx, user: discord.User = None, amount: float = None):
-        if user is None:
-            await ctx.send("Provide an user.")
-            return
-        if amount is None:
-            await ctx.send("Provide an amount.")
-        player = await self.bot.get_player(user.id)
-        if player is None:
-            await ctx.send("They're not even in the database...")
-            return
-        
-        await self.bot.db.execute("UPDATE e_users SET bal = ? WHERE id = ?",(amount, user.id,))
-        await ctx.send("Success.")
-        
-    @dev.command(aliases=["bu"])
-    async def backup(self, ctx):
-        try:
-            await self.bot.db.commit()
-            self.bot.backup_db = await aiosqlite.connect('ecox_backup.db')
-            await self.bot.db.backup(self.bot.backup_db)
-            await self.bot.backup_db.commit()
-            await self.bot.backup_db.close()
-            await ctx.send("done, lol")
-            return
+            cur = await self.bot.db.execute(statement)
+            try:
+                do_fetchone = flags['--fetchone']
+                do_fetchall = flags['--fetchall']
+                do_fetchmany = flags['--fetchmany']
+            except KeyError:
+                pass
+            if do_fetchone:
+                result = await cur.fetchone()
+                await ctx.send_in_codeblock((f"$ {result}"), language='tex')
+            if do_fetchall:
+                result = await cur.fetchall()
+                await ctx.send_in_codeblock((f"$ {result}"), language='tex')
+            if do_fetchmany != 0:
+                result = await cur.fetchmany(do_fetchmany)
+                await ctx.send_in_codeblock((f"$ {result}"), language='tex')
+            else:
+                result = await cur.fetchone()
+                return await ctx.send_in_codeblock((f"$ {result}"), language='tex')
         except Exception as e:
-            await ctx.send(f"An error occured while backing up the database:\n`{e}`")
-            return
-        
+            return await ctx.send_in_codeblock((f"[{e}]"))
+    
+    @dev.command(aliases=['cu','c'])
+    async def cleanup(self, ctx, amount=100):
+        wordlist = ["yoinked","yeeted","throwned","chucked","lobbed","propelled","bit the dust","tossed","are now sleeping with the fishes"] # because funny
+        try:
+            def is_me(m):
+                return m.author == self.bot.user
+
+            deleted = 0
+            async for m in ctx.channel.history(limit=amount):
+                if is_me(m):
+                    await m.delete()
+                    deleted += 1
+                else:
+                    pass
+            return await ctx.send_in_codeblock((f"ok, {deleted}/{amount} messages {random.choice(wordlist)}"))
+        except Exception as e:
+            await ctx.send_in_codeblock(f"hm, didn't work\n[{e}]", language='css')
+    
     @dev.command(hidden=True,name="stream")
     async def streamingstatus(self, ctx, *, name):
         if ctx.author.id != 267410788996743168:
@@ -183,13 +159,5 @@ class devtools(commands.Cog, command_attrs=dict(hidden=True)):
         await self.bot.change_presence(activity=discord.Streaming(name=name,url="https://twitch.tv/monstercat/"))
         await ctx.send("aight, done")
         
-    @dev.command()
-    async def m(self, ctx):
-        if self.bot.maintenance:
-            self.bot.maintenance = False
-            return await ctx.send("Maintenence is now off.")
-        else:
-            self.bot.maintenance = True
-            return await ctx.send("Maintenence is now on.")
 def setup(bot):
-    bot.add_cog(devtools(bot))
+    bot.add_cog(owner(bot))
