@@ -26,7 +26,11 @@ class meta(commands.Cog):
         if len(prefix) > 10:
             return await ctx.send_in_codeblock('Prefix is too long')
         self.bot.prefixes[ctx.guild.id] = prefix
-        await self.bot.db.execute("UPDATE f_prefixes SET prefix = ? WHERE guildid = ?",(prefix, ctx.guild.id,))
+        cur = await self.bot.db.execute("SELECT * FROM f_prefixes WHERE guildid = ?",(ctx.guild.id,))
+        if (await cur.fetchone()) is None:
+            await self.bot.db.execute("INSERT INTO f_prefixes VALUES (?, ?)",(ctx.guild.id, prefix,))
+        else:
+            await self.bot.db.execute("UPDATE f_prefixes SET prefix = ? WHERE guildid = ?",(prefix, ctx.guild.id,))
         await self.bot.db.commit()
         return await ctx.send_in_codeblock(f"Prefix updated to {prefix}")
     
@@ -34,6 +38,8 @@ class meta(commands.Cog):
     async def on_prefix_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             return await ctx.send_in_codeblock("You must have Manage Guild permissions for this")
+        else:
+            return await ctx.send_in_codeblock("Internal Error")
         
     @commands.command(description="views bot's news/updates")
     async def news(self,ctx, *,setnews = None): # for this, the news is a botvar so it doesnt get boned on cog reload
@@ -65,7 +71,10 @@ class meta(commands.Cog):
         fishtotal = (await c.fetchone())[0]
         await self.bot.db.commit()
         c = await self.bot.db.execute("SELECT * FROM f_stats")
-        totalfished, totalcoinsearned, totalrodsbought = await c.fetchone()
+        fstats = await c.fetchone()
+        totalfished = fstats[0]
+        totalcoinsearned = fstats[1]
+        totalrodsbought = fstats[2]
         end2 = time.perf_counter()
         
         duration = round(((end - start) * 1000),1)
@@ -76,33 +85,18 @@ Python, Discordpy Version: {platform.python_version()}, {discord.__version__}
 Fishes: {fishtotal}
 Rods: 539
 Total Rods Bought: {totalrodsbought}
-Fish Caught Since Start: {self.bot.fishCaughtinsession}
-Total Fish Caught: {totalfished}
+Fish Caught (Since Start): {self.bot.fishCaughtinsession}
+Fish Caught (Total): {totalfished}
 Total Coins Earned: {totalcoinsearned}
 Websocket Ping: {ws}ms
 API Ping: {duration}ms
 Database Ping: {db_duration}ms
-Uptime: {days}d, {hours}h, {minutes}m, {seconds}s
-Source: 'https://github.com/averwhy/fishy-discord-game'```
+Uptime: {days}d, {hours}h, {minutes}m, {seconds}s```
         """
         await message.edit(content=msg)
-    
-    # @commands.command()
-    # async def ping(self, ctx):
-    #     em = discord.PartialEmoji(name="loading",animated=True,id=782995523404562432)
-    #     start = time.perf_counter()
-    #     message = await ctx.send_in_codeblock("Ping...", language='css')
-    #     end = time.perf_counter()
-    #     start2 = time.perf_counter()
-    #     await self.bot.db.commit()
-    #     end2 = time.perf_counter()
-    #     duration = round(((end - start) * 1000),1)
-    #     db_duration = round(((end2 - start2) * 1000),1)
-    #     ws = round((self.bot.latency * 1000),1)
-    #     await message.edit(content=f"```prolog\nWebsocket.......... {round(self.bot.latency * 1000,2)}ms\nAPI.......... {duration}ms\nDatabase.......... {db_duration}ms\n```")
         
-    @commands.cooldown(1,40,BucketType.channel)
-    @commands.command()
+    @commands.cooldown(1,10,BucketType.channel)
+    @commands.command(hidden=True)
     async def about(self,ctx):
         embed = discord.Embed(title=f"**About Fishy.py**", description="", colour=discord.Colour(0x158b94))
         embed.set_author(name=f"Developed by @averwhy#3899, Original by @Deda#9999")
@@ -112,13 +106,13 @@ Source: 'https://github.com/averwhy/fishy-discord-game'```
         embed.add_field(name="Have more questions? Feel free to join the support server and ask averwhy#3899!", value=f"The servers invite can be obtained via the `{ctx.prefix}support` command.",inline=False)
         await ctx.send(embed=embed)
     
-    @commands.cooldown(1,60,BucketType.guild)
-    @commands.command()
+    @commands.cooldown(1,20,BucketType.guild)
+    @commands.command(description='invite to the fishy.py support server')
     async def support(self,ctx): # this sends the fishypy support server link
         em = discord.Embed(title="Click me for the support server",url="http://discord.gg/HSqevex",color=discord.Color.blue())
         await ctx.send(embed=em)
         
-    @commands.command(description="")
+    @commands.command(description="invites me to your server")
     async def invite(self, ctx):
         embed = discord.Embed(description="[discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=289856&scope=bot](https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=289856&scope=bot)",color=discord.Color(0x2F3136))
         try: return await ctx.send(embed=embed)

@@ -1,14 +1,24 @@
 import discord
 import platform
 import time
-from discord.ext import commands, tasks, flags
+from discord.ext import commands, tasks
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
 import asyncio
 import aiosqlite
 import random
+from discord.ext import menus
 from datetime import datetime
 OWNER_ID = 267410788996743168
+
+class SQLSource(menus.ListPageSource):
+    def __init__(self, data):
+        super().__init__(data, per_page=1)
+
+    async def format_page(self, menu, entries):
+        embed = discord.Embed(description=f"```css\n{entries}\n```",color=discord.Color.random())
+        return embed
+
 
 class owner(commands.Cog, command_attrs=dict(hidden=True)):
     """
@@ -16,7 +26,6 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
     """
     def __init__(self,bot):
         self.bot = bot
-        self.dev.add_command(self.sql)
     
     async def cog_check(self,ctx):
         return ctx.author.id == OWNER_ID
@@ -104,35 +113,21 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
         self.bot.fishers.clear()
         await self.bot.db.commit()
         await self.bot.db.close()
-        await self.bot.logout()
+        try:
+            await self.bot.logout()
+        except RuntimeError:
+            pass
         
-    @flags.add_flag("--fetchall", action='store_true')
-    @flags.add_flag("--fetchone", action='store_true')
-    @flags.add_flag("--fetchmany", type=int, default=0)
-    @flags.command()
-    async def sql(self, ctx, *, statement, **flags):
+    @dev.command()
+    async def sql(self, ctx, *, statement):
         try:
             cur = await self.bot.db.execute(statement)
-            try:
-                do_fetchone = flags['--fetchone']
-                do_fetchall = flags['--fetchall']
-                do_fetchmany = flags['--fetchmany']
-            except KeyError:
-                pass
-            if do_fetchone:
-                result = await cur.fetchone()
-                await ctx.send_in_codeblock((f"$ {result}"), language='tex')
-            if do_fetchall:
-                result = await cur.fetchall()
-                await ctx.send_in_codeblock((f"$ {result}"), language='tex')
-            if do_fetchmany != 0:
-                result = await cur.fetchmany(do_fetchmany)
-                await ctx.send_in_codeblock((f"$ {result}"), language='tex')
-            else:
-                result = await cur.fetchone()
-                return await ctx.send_in_codeblock((f"$ {result}"), language='tex')
+            fetchedone = await cur.fetchone()
+            fetchedall = await cur.fetchone()
+            pages = menus.MenuPages(source=SQLSource([fetchedone, fetchedall]), clear_reactions_after=True)
+            await pages.start(ctx)
         except Exception as e:
-            return await ctx.send_in_codeblock((f"[{e}]"))
+            return await ctx.send_in_codeblock((f"[{e}]"), language='css')
     
     @dev.command(aliases=['cu','c'])
     async def cleanup(self, ctx, amount=100):

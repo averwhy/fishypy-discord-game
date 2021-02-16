@@ -1,7 +1,7 @@
 import platform
 import traceback
 import asyncio
-import time
+import time, math
 import os, sys, random
 import aiosqlite
 import discord
@@ -27,9 +27,19 @@ class game(commands.Cog):
         }
     
     @commands.Cog.listener()   
-    async def on_fish_catch(self, player, fish):
-        print(f"{player.name} caught a {fish.name}")
-    
+    async def on_fish_catch(self, player, fish, coins):
+        coins = round(coins,2)
+        #first, lets update stats
+        await self.bot.db.execute("UPDATE f_stats SET totalfished = (totalfished + 1)")
+        await self.bot.db.execute("UPDATE f_stats SET totalcoinsearned = (totalcoinsearned + ?)",(coins,))
+        self.bot.fishCaughtinsession += 1
+        self.bot.coinsEarnedInSession += coins
+        
+        await self.bot.db.execute("UPDATE f_users SET coins = (coins + ?) WHERE userid = ?",(coins, player.id,))
+        await self.bot.db.execute("UPDATE f_users SET totalcaught = (totalcaught + 1) WHERE userid = ?",(player.id,))
+        await player.update_collection(fish.oid)
+        await player.check_trophy(fish.oid)
+        
     def select_3_reactions(self):
         templist = self.image_list
         amount_to_remove = (len(templist) - 3) # to have 3 remaining
@@ -41,134 +51,82 @@ class game(commands.Cog):
     def can_fish(self, userid):
         result = [i for i in self.bot.fishers if i == userid]
         if result == []:
+            self.bot.fishers.append(userid)
             return True
         return False
+    
+    async def do_fish(self, ctx, player):
+        msg = None
+        got_it_correct = False
+        fish = None
+        threereactions = self.select_3_reactions()
+        correct_emoji, correct_emoji_url = random.choice(list(threereactions.items()))
+        initial_embed = discord.Embed(title="React with:")
+        initial_embed.set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url)
+        initial_embed.set_thumbnail(url=correct_emoji_url)
+        msg = await ctx.send(embed=initial_embed)
+        for r in list(threereactions.keys()):
+            await msg.add_reaction(r[0])
+        await asyncio.sleep(self.bot.seconds_to_react)
+        updatedmsg = await ctx.channel.fetch_message(msg.id)
+        cr = [r for r in updatedmsg.reactions if str(r) == correct_emoji]
+        for u in (await cr[0].users().flatten()):
+            if u.id == ctx.author.id:
+                got_it_correct = True
+                break
+            else:
+                continue
+        if not got_it_correct:
+            return await self.stop_fishing(ctx, updatedmsg)
+        await msg.add_reaction('✅')
+        await asyncio.sleep(0.5)
+        fish = await ctx.random_fish(player.rod)
+        splitname = fish.name.split()
+        caught_before = "" if (await player.check_collection(fish.oid)) else " (NEW)"
+        threereactions = self.select_3_reactions()
+        correct_emoji, correct_emoji_url = random.choice(list(threereactions.items()))
+        fancy_rarity = await dbc.fish.fancy_rarity(fish.rarity)
+        embed = discord.Embed(title=f"{fish.name}{caught_before}",url=f"https://www.fishbase.de/Summary/{splitname[0]}-{splitname[1]}.html", color=fancy_rarity[1])
+        embed.set_thumbnail(url=correct_emoji_url)
+        embed.set_image(url=fish.image_url)
+        embed.add_field(name='__Length__',value=f'{fish.original_length}cm')
+        embed.add_field(name='__Rarity__',value=f'{fancy_rarity[0].upper()}')
+        embed.add_field(name='__Coins Earned__', value=f'{round(((fish.coins(player.rod_level)) * self.bot.coin_multiplier), 3)} coins')
+        await msg.edit(embed=embed)
+        self.bot.dispatch("fish_catch", player, fish, round(((fish.coins(player.rod_level)) * self.bot.coin_multiplier), 3))
     
     async def stop_fishing(self, ctx, fishmsg):
         await fishmsg.add_reaction('🚫')
         try:
             self.bot.fishers.remove(ctx.author.id)
         except: pass
+        return False
         
     async def start_fishing(self, ctx, fishmsg):
         self.bot.fishers.append(ctx.author.id)
     
     @commands.command(name="fish",description="fishy.py's fish game")
-    async def fishbeta(self, ctx):
+    async def fish(self, ctx):
+        """The main fish game for Fishy.py.\nTo play, run the command, then click on the correct reaction. It will keep going over and over until you get it wrong."""
         player = await self.bot.get_player(ctx.author.id)
-        if not player: return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
-        fishing = self.can_fish(ctx.author.id)
-        while fishing:
-            msg = None
-            got_it_correct = None
-            threereactions = self.select_3_reactions()
-            cfish = await ctx.random_fish()
-            correct_emoji, correct_emoji_url = random.choice(threereactions)
-            rlist = []
-            initial_embed = discord.Embed(title="React with:")
-            initial_embed.set_thumbnail(url=correct_emoji_url)
-            msg = await ctx.send(embed=initial_embed)
-            for r in rlist:
-                await ctx.message.add_reaction(r[0])
-            def fish_check(r, u):
-                nonlocal got_it_correct, correct_emoji
-                if u == ctx.author and r.message == msg:
-                    if str(r.emoji) == correct_emoji:
-                        print("they got it right")
-                        got_it_correct = True
-                    else:
-                        print("wrong lulw")
-                        got_it_correct = False
-                    return True
-                return False
-            try: reaction, user = await self.bot.wait_for('reaction_add', check=fish_check, timeout=self.bot.secondstoReact)
-            except asyncio.TimeoutError:
-                fishing = False
-                await self.stop_fishing(ctx, msg)
+        if player is None: return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
+        can_fish = self.can_fish(ctx.author.id)
+        if not can_fish:
+            return await ctx.send_in_codeblock("you already fishing")
+        while can_fish:
+            r = await self.do_fish(ctx, player)
+            if r is False or None:
+                can_fish = False
                 break
-            if got_it_correct is False:
-                fishing = False
-                await self.stop_fishing(ctx, msg)
-                break
-            await msg.add_reaction('✅')
-            await asyncio.sleep(0.7)
-            await msg.edit(content="they caught a fish", embed=None)
-            bot.dispatch("fish_catch", player, cfish)
+            else:
+                continue
         return
     
     @commands.check(botchecks.ban_check)
-    @commands.group(invoke_without_command=True, aliases=["af"])
+    @commands.group(invoke_without_command=True, aliases=["af"], hidden=True)
     async def autofish(self, ctx):
+        """The autofish command. Currently a WIP."""
         await ctx.send_in_codeblock("Coming soon")
-
-
-    # @commands.cooldown(1,7,BucketType.user)
-    # @commands.check(botchecks.ban_check)
-    # @commands.command(aliases=["f"])
-    # async def fish(self, ctx): # the fish command. this consists of 1. checking if the user exists 2. if user exists, put together an embed and get a fish from DB using fish() class, 3. sends it and calls fish_update_success()
-    #     authorid = ctx.author.id
-    #     try:
-    #         guildname = ctx.guild.name
-    #         guildid = ctx.guild.id
-    #     except: # dms, probably
-    #         pass
-    #     checkuser = await bot.usercheck(authorid)
-    #     if checkuser == False:
-    #         await ctx.send(f"`I was unable to retrieve your profile. Have you done {bot.defaultprefix}start yet?`")
-    #     else:
-    #         embed = discord.Embed(title="**React to fish!**", description="", colour=discord.Colour(0x000000))
-    #         msgtoedit = await ctx.send(embed=embed)
-    #         await msgtoedit.add_reaction(emoji="\U0001f41f") # fish emoji
-    #         await msgtoedit.add_reaction(emoji="\U0001f419") # octopus
-    #         await msgtoedit.add_reaction(emoji="\U0001f420") # tropical fish
-    #         reactionList = ["\U0001f41f","\U0001f419","\U0001f420"]
-    #         def check(reaction, user):
-    #             return user == ctx.message.author and str(reaction.emoji) in reactionList
-    #         try:
-    #             reaction, user = await bot.wait_for('reaction_add', timeout=bot.secondstoReact, check=check)
-    #         except asyncio.TimeoutError:
-    #             try:
-    #                 await msgtoedit.clear_reactions()
-    #                 embed = discord.Embed(title="**Timed out :(**", description="Fish again?", colour=discord.Colour(0x000000))
-    #                 await msgtoedit.edit(embed=embed)
-    #             except discord.errors.Forbidden:
-    #                 pass
-    #         else:
-    #             try:
-    #                 await msgtoedit.clear_reactions()
-    #             except discord.errors.Forbidden:
-    #                 pass
-    #             f = fish()
-    #             returnedlist = await f.randomfish()
-    #             rarity = returnedlist[2]
-    #             oid = returnedlist[0]
-    #             flength = returnedlist[4]
-    #             raritycalc2 = f.calculate_rarity(flength)
-    #             user = player()
-    #             await user.update_rarity_count(userobject=ctx.author,rarity=raritycalc2)
-    #             lvl_up_bool = await fish_success_update(author=ctx.author,guild=ctx.message.guild,rarity=rarity,oid=oid,flength=flength)
-    #             if lvl_up_bool is True:
-    #                 await ctx.send(f"{ctx.author.mention}`, you leveled up!`")
-    #             xp = float(rarity)
-    #             xp2 = xp/100
-    #             xp2 = round(xp2,5)
-    #             embed = discord.Embed(title=f"**{returnedlist[5]}**", description="",url=returnedlist[1], colour=discord.Colour(0x00cc00))
-    #             userdata = await self.bot.grab_db_user(ctx.author.id)
-    #             currentxp = user.get_xp(userdata)
-    #             levelbar = await self.bot.rodUpgradebar(userdata[3])
-    #             embed.set_footer(text=f"{round(currentxp,3)}/1 XP [{levelbar}]",icon_url=(ctx.author.avatar_url))
-    #             if bot.xp_multiplier == 1.0:
-    #                 embed.add_field(name="__**XP Gained**__", value=f"{xp2}")
-    #             else:
-    #                 embed.add_field(name="__**XP Gained**__", value=f"{xp2} **x{bot.xp_multiplier}**")
-    #             embed.add_field(name="__**Rarity**__",value=f"{raritycalc2}")
-    #             embed.add_field(name="__**Length**__", value=f"{returnedlist[4]}cm")
-    #             embed.add_field(name="__**# in database**__", value=f"{returnedlist[3]}/16205 fishes")
-    #             embed.set_image(url=returnedlist[1])
-    #             await msgtoedit.edit(embed=embed)
-    #             print(f"{ctx.author.name} caught a {returnedlist[5]} in channel #{ctx.channel.name}, guild {ctx.guild.name} [user: {ctx.author.id}, channel {ctx.channel.id}, guild {ctx.guild.id}]")
-    #             await asyncio.sleep(1)
-    #             fish.reset_cooldown(ctx) # remove 7 second cooldown
                 
 def setup(bot):
     bot.add_cog(game(bot))

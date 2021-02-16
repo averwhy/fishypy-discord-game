@@ -2,7 +2,7 @@
 import platform
 import traceback
 import asyncio
-import time
+import time, random
 import os, sys
 import aiosqlite
 import discord
@@ -10,7 +10,8 @@ from datetime import datetime
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
-from .utils import player, fish, botchecks
+from .utils import botchecks
+from .utils.dbc import player, fish
 
 class playermeta(commands.Cog):
     def __init__(self, bot):
@@ -19,83 +20,49 @@ class playermeta(commands.Cog):
     @commands.check(botchecks.ban_check)
     @commands.command(aliases=["prof","me"], description="player profile, rod level, collection")
     async def profile(self, ctx, user: discord.User = None): # profile command
-        dbuser = player.player()
-        tfish = fish()
+        """shows you your player profile (coins, collection, total caught, trophy, etc). \nyou can also view other users profiles, for example !profile @Fishy.py"""
         if user is None:
             user = ctx.author
-        checkuser = await self.bot.usercheck(user.id)
-        if checkuser is False:
-            await ctx.send_in_codeblock(f"I was unable to retrieve your profile. Have you done {ctx.prefix}start yet?")
-            return
-        # rewrite
-        await ctx.send('.')
+        playeruser = await self.bot.get_player(user.id)
+        if playeruser is None:
+            return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
+        collection_length = await self.bot.db.execute("SELECT COUNT(*) FROM f_collections WHERE userid = ?",(user.id,))
+        embed = discord.Embed(title=user.name)
+        embed.add_field(name="__Coins__", value=round(playeruser.coins,2))
+        embed.add_field(name="__Collection__", value=(await playeruser.get_collection()))
+        embed.add_field(name="__Total Caught__", value=f"{playeruser.total_caught} fish")
+        playerrod = await playeruser.get_rod()
+        embed.add_field(name="__Rod__", value=f"**{playerrod.name}** (Max length {playerrod.max_length}cm)")
+        embed.set_thumbnail(url=user.avatar_url)
+        if playeruser.trophy_oid not in [None, 'none']:
+            playertrophy = await self.bot.get_fish(playeruser.trophy_oid)
+            embed.set_image(url=playertrophy.image_url)
+            embed.color = (await fish.fancy_rarity(playertrophy.rarity))[1]
+            embed.add_field(name=f"__Trophy: {playertrophy.name}__", value=f"**Length:** {playertrophy.original_length} cm; **worth:** {playertrophy.coins(playeruser.trophy_rod_level)} coins", inline=False)
+        else:
+            embed.add_field(name="__Trophy__", value="None, try fishing!")
+        await ctx.reply(embed=embed)
         
     @commands.check(botchecks.ban_check)
     @commands.guild_only()
     @commands.command(description="adds you to the database")
     async def start(self, ctx): # adds users to DB so they can fish
-        async with ctx.channel.typing():
-            result = await player.create(self.bot, userobject=ctx.author)
-            await asyncio.sleep(0.5)
-            if result:
-                return await ctx.send_in_codeblock(f"youre added! use {ctx.prefix} to start fishing.", language='css')
-            else:
-                #user exists
-                await ctx.send_in_codeblock(f"you're already in the database, {ctx.author.name}")
+        """registers you to the database.\nthis command exists so people know when they're giving their data to the bot.\nif you want your data deleted, please join the support server by doing !support"""
+        result = await player.create(self.bot, ctx.author)
+        reactions = ['✅', '<:yesfish:810187479466115102>', '<a:snod:798165766888488991>']
+        if result:
+            selected_reaction = (random.choices(reactions, weights=[0.8, 0.1, 0.1], k=1))[0]
+            return await ctx.message.add_reaction(selected_reaction)
+        await ctx.reply_in_codeblock("you're already in the database")
       
     @commands.check(botchecks.ban_check)
     @commands.cooldown(1,5,BucketType.user)
     @commands.command(description="views your or someone elses trophy")
     async def trophy(self, ctx, user: discord.User = None):
+        """shows your trophy (longest fish caught)\ncan also view another users trophy, for example: !trophy @Fishy.py"""
         if user is None:
             user = ctx.author
-        authorid = user.id
-        checkuser = await self.bot.usercheck(authorid)
-        if checkuser is not False:
-            data1 = await self.bot.grab_db_user(authorid)
-            dbuser = player()
-            data = await dbuser.get_trophy(data1)
-            if data is None:
-                embed = discord.Embed(title=f"You dont have a Trophy!",description="Try Fishing!")
-            else:
-                embed = discord.Embed(title=f"{user.name}'s Trophy",url=data[1],colour=discord.Colour(0x00cc00))
-                tvalue = (f"**{data[5]}** at **{data[4]}cm**")
-                embed.set_image(url=data[1])
-                f = fish()
-                raritycalc = f.calculate_rarity(data[4])
-                dbPos = data[3]
-                embed.add_field(name=tvalue,value=f"{raritycalc}({data[4]} cm), #{dbPos} in database")
-            await ctx.send(embed=embed)
-                
-    @commands.check(botchecks.ban_check)
-    @commands.cooldown(1,300,BucketType.user)
-    @commands.command(description="leave a review for fishy.py :)")
-    async def review(self, ctx, *, reviewtext): # review command. Sends a message to fishypy guild and saves that message ID in db. If user has sent a review it checks for that and edits it if it exists.
-        authorid = ctx.message.author.id
-        authorname = ctx.message.author.name
-        checkuser = await self.bot.usercheck(authorid)
-        if checkuser is not False:
-            data = await self.bot.grab_db_user(id=authorid)
-            user = player.player(data)
-            askmessage = await ctx.send("`Are you sure you would like to submit your review? `")
-            await askmessage.add_reaction(emoji="\U00002705") # white check mark
-            def check(reaction, user):
-                return user == ctx.message.author and str(reaction.emoji) == "\U00002705"
-            try:
-                reaction, user = await bot.wait_for('reaction_add', timeout=bot.secondstoReact, check=check)
-            except asyncio.TimeoutError:
-                try:
-                    await askmessage.clear()
-                except: #no reaction perms
-                    pass 
-                await askmessage.edit(content="`Prompt timed out. Try again`")
-            else:
-                m = await user.update_review(userobject=ctx.author,reviewtext=reviewtext)
-                # and then
-                await askmessage.clear_reactions()
-                await askmessage.edit(content=m)   
-        else:
-            await ctx.send(f"`I was unable to retrieve your profile. Have you done {bot.defaultprefix}start yet?`")
+
             
 def setup(bot):
     bot.add_cog(playermeta(bot))
