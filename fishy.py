@@ -35,7 +35,7 @@ class FishyContext(commands.Context):
         fish_range = (0.8) * math.floor(rod_level)
         c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes WHERE fishlength <= ?",(fish_range,))
         fish_in_range = (await c.fetchone())[0]
-        fish_range = math.floor(0.1 * fish_in_range)
+        fish_range = math.floor(0.2 * fish_in_range)
         if fish_range < 0: fish_range = 1 # to prevent 0's
         cur = await self.bot.db.execute("SELECT * FROM fishes WHERE fishlength <= ? AND fishlength >= ? ORDER BY RANDOM();",(fish_range, math.floor(rod_level),))
         data = await cur.fetchone()
