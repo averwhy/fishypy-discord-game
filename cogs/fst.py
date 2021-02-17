@@ -26,7 +26,8 @@ async def is_support_server(ctx):
     else:
         raise IsntSupportServer()
 
-class FishyServerTools(commands.Cog):
+class fst(commands.Cog, command_attrs=dict(hidden=True)):
+    """fst = Fishy Server Tools. These are commands for the support server."""
     def __init__(self,bot):
         self.bot = bot
         self.issue = re.compile(r'##(?P<number>[0-9]+)') # thanks rapptz :)
@@ -159,4 +160,4 @@ class FishyServerTools(commands.Cog):
             await ctx.send(f"`Something went wrong:` ```\n{e}\n```")
             
 def setup(bot):
-    bot.add_cog(FishyServerTools(bot))
+    bot.add_cog(fst(bot))
