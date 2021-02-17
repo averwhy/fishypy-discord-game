@@ -13,7 +13,6 @@ from discord.ext.commands import CheckFailure, check
 from .utils import botchecks, dbc
 
 class game(commands.Cog):
-    
     def __init__(self, bot):
         self.bot = bot
         self.image_list = {
