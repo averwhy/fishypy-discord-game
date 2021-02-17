@@ -78,7 +78,7 @@ class FpyBot(commands.Bot):
     
     async def rodUpgradebar(self, rodlvl):
         return f"{'#' * (decimal := round(rodlvl % 1 * 15))}{'_' * (15 - decimal)}"
-    #print(returned_upgradeBar)   
+    #print(returned_upgradeBar)
 
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["JISHAKU_HIDE"] = "True"  
@@ -90,13 +90,12 @@ sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874
 defaultprefix = '!'
 async def get_prefix(bot, message):
     return bot.prefixes.get(message.guild.id, defaultprefix)
-bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
+bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions = True, messages = True, members = False, guilds = True))
 bot.remove_command('help')
 initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shop','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
 
 #BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168
-bot.reviewChannel_id = 735206051703423036
 bot.launch_time = datetime.utcnow()
 bot.version = '1.1.0'
 bot.socket_sent_counter = 0
@@ -123,6 +122,7 @@ async def startup(bot):
     cur = await bot.db.execute('SELECT * FROM f_prefixes')
     dbprefixes = await cur.fetchall()
     bot.prefixes = {guild_id: prefix for guild_id, prefix in dbprefixes}
+    await bot.db.commit()
 bot.loop.create_task(startup(bot))
 
 ############################################################################################################################################################################################

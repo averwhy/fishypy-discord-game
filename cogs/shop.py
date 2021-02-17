@@ -47,7 +47,7 @@ class shop(commands.Cog):
         table = table + f"\n(and more...)({playeruser.coins} coins)"
         await ctx.reply_in_codeblock(table, language='md')
     
-    @commands.group(invoke_without_command=True, aliases=["u"])
+    @commands.group(invoke_without_command=True, aliases=["u"], description="buy new rods automatically")
     async def upgrade(self, ctx):
         """buys something."""
         await ctx.send_in_codeblock(f"please specify {ctx.prefix}upgrade rod")
