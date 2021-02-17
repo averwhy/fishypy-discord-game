@@ -52,7 +52,7 @@ class shop(commands.Cog):
         """buys something."""
         await ctx.send_in_codeblock(f"please specify {ctx.prefix}upgrade rod")
         
-    @buy.command(name='rod')
+    @upgrade.command(name='rod')
     async def _rod(self, ctx):
         """buys the next avaliable rod automatically, if you have enough coins."""
         playeruser = await self.bot.get_player(ctx.author.id)
