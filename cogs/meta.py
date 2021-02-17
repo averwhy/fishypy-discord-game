@@ -27,7 +27,7 @@ class meta(commands.Cog):
             return await ctx.send_in_codeblock('Prefix is too long')
         if prefix.strip() == self.bot.defaultprefix:
             self.bot.prefixes.pop(ctx.guild.id)
-            await self.bot.db.execute("DELETE FROM f_prefixes WHERE guildid = ?",(prefix, ctx.guild.id,))
+            await self.bot.db.execute("DELETE FROM f_prefixes WHERE guildid = ?",(ctx.guild.id,))
             await self.bot.db.commit()
             await ctx.send_in_codeblock("prefix reset to default prefix !")
         self.bot.prefixes[ctx.guild.id] = prefix
