@@ -31,7 +31,7 @@ class fish:
             return ["Common", 0x40ff00]
     
     def coins(self, rod_level):
-        return (self.rarity * math.floor(rod_level)) * (round(random.uniform(1.0,2.0),1))
+        return ((self.rarity * math.floor(rod_level)) * (round(random.uniform(1.0,2.0),1)) * 1.5)
 
 class player:
     def __init__(self, bot, data):
