@@ -176,7 +176,7 @@ class player:
     async def get_rod(self):
         c = await self.bot.db.execute("SELECT * FROM f_rods WHERE level = ?",(self.rod,))
         data = await c.fetchone()
-        fish_range = (0.9) * math.floor(self.rod)
+        fish_range = (0.8) * math.floor(self.rod)
         c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes WHERE fishlength <= ?",(fish_range,))
         result = await c.fetchone()
         fish_in_range = result[0]
