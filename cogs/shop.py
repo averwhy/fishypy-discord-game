@@ -68,6 +68,7 @@ class shop(commands.Cog):
             return await ctx.reply_in_codeblock(f'you cannot afford a rod upgrade, you need {data[2] - playeruser.coins} more coins')
         
         await self.bot.db.execute("UPDATE f_users SET rodlevel = (rodlevel + 1) WHERE userid = ?",(ctx.author.id,))
+        await self.bot.db.execute("UPDATE f_users SET coins = (coins - ?) WHERE userid = ?",(data[2], ctx.author.id,))
         await self.bot.db.commit()
         await ctx.reply_in_codeblock(f"success! new rod: {data[1]}")
         
