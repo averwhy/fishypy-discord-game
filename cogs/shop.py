@@ -17,7 +17,7 @@ class shop(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         
-    @commands.group(invoke_without_command=True, name='shop', description='the rod shop')
+    @commands.group(invoke_without_command=True, name='shop', description='shows you the prices of upgrades for rods')
     async def _shop(self, ctx):
         """the main shop command."""
         await ctx.send_in_codeblock(f"usage: {ctx.prefix}shop [rods]")
@@ -27,7 +27,7 @@ class shop(commands.Cog):
         """shows you your current rod, and the upcoming rods you can buy."""
         playeruser = await self.bot.get_player(ctx.author.id)
         if playeruser is None:
-            return await ctx.send_in_codeblock(f"fyou dont have a profile, use {ctx.prefix}start to get one")
+            return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         
         lvl = playeruser.rod_level
         cur = await self.bot.db.execute("SELECT * FROM f_rods WHERE level = ?",(playeruser.rod_level,))
@@ -47,17 +47,17 @@ class shop(commands.Cog):
         table = table + f"\n(and more...)({playeruser.coins} coins)"
         await ctx.reply_in_codeblock(table, language='md')
     
-    @_shop.group(invoke_without_command=True, aliases=["upgrade"])
-    async def buy(self, ctx):
+    @commands.group(invoke_without_command=True, aliases=["u"])
+    async def upgrade(self, ctx):
         """buys something."""
-        await ctx.send_in_codeblock(f"usage: {ctx.prefix}upgrade [rod]")
+        await ctx.send_in_codeblock(f"please specify {ctx.prefix}upgrade rod")
         
     @buy.command(name='rod')
     async def _rod(self, ctx):
         """buys the next avaliable rod automatically, if you have enough coins."""
         playeruser = await self.bot.get_player(ctx.author.id)
         if playeruser is None:
-            return await ctx.send_in_codeblock(f"fyou dont have a profile, use {ctx.prefix}start to get one")
+            return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         
         cur = await self.bot.db.execute("SELECT * FROM f_rods WHERE level = ?",((playeruser.rod_level + 1),))
         data = await cur.fetchone()

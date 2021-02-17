@@ -25,6 +25,11 @@ class meta(commands.Cog):
     async def set_prefix(self, ctx, prefix):
         if len(prefix) > 10:
             return await ctx.send_in_codeblock('Prefix is too long')
+        if prefix.strip() == self.bot.defaultprefix:
+            self.bot.prefixes.pop(ctx.guild.id)
+            await self.bot.db.execute("DELETE FROM f_prefixes WHERE guildid = ?",(prefix, ctx.guild.id,))
+            await self.bot.db.commit()
+            await ctx.send_in_codeblock("prefix reset to default prefix !")
         self.bot.prefixes[ctx.guild.id] = prefix
         cur = await self.bot.db.execute("SELECT * FROM f_prefixes WHERE guildid = ?",(ctx.guild.id,))
         if (await cur.fetchone()) is None:
@@ -32,12 +37,12 @@ class meta(commands.Cog):
         else:
             await self.bot.db.execute("UPDATE f_prefixes SET prefix = ? WHERE guildid = ?",(prefix, ctx.guild.id,))
         await self.bot.db.commit()
-        return await ctx.send_in_codeblock(f"Prefix updated to {prefix}")
+        return await ctx.send_in_codeblock(f"prefix updated to {prefix}")
     
     @set_prefix.error
     async def on_prefix_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
-            return await ctx.send_in_codeblock("You must have Manage Guild permissions for this")
+            return await ctx.send_in_codeblock("you must have Manage Guild permissions to change the servers prefix", language='ml')
         else:
             return await ctx.send_in_codeblock("Internal Error")
         

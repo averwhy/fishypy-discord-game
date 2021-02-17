@@ -1,11 +1,11 @@
 # pylint: disable=wrong-import-order, missing-function-docstring, invalid-name, broad-except, too-many-branches, too-many-statements, too-many-locals, 
-
 import platform
 import traceback
 import asyncio
 import time
 import os, sys
 import aiosqlite
+import aiohttp
 import discord
 from datetime import datetime
 from discord.ext import commands
@@ -13,6 +13,7 @@ from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
 from .utils import botchecks
 import humanize
+SUPPORT_SERVER_ID = 734581170452430888
 
 class events(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self, bot):
@@ -109,6 +110,26 @@ Created:         {humanize.precisedelta(guild.created_at)}
 Emoji limit:     {humanize.naturalsize(guild.emoji_limit)}```
                 """
         await logchannel.send(msg)
+        
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        if member.guild.id == SUPPORT_SERVER_ID:
+            hook_link = os.getenv('FISHY_JOIN_HOOK')
+            async with aiohttp.ClientSession() as session:
+                joinhook = discord.Webhook.from_url(url=hook_link, adapter=discord.AsyncWebhookAdapter(session))
+                await joinhook.send(f"{str(member)} joined!")
+        else:
+            pass
+    
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        if member.guild.id == SUPPORT_SERVER_ID:  
+            hook_link = os.getenv('FISHY_LEAVE_HOOK')
+            async with aiohttp.ClientSession() as session:
+                joinhook = discord.Webhook.from_url(url=hook_link, adapter=discord.AsyncWebhookAdapter(session))
+                await joinhook.send(f"{str(member)} left.")
+        else:
+            pass
         
         
 def setup(bot):

@@ -7,10 +7,9 @@ import os, psutil
 from typing import Union
 from collections import namedtuple
 from jishaku.features.baseclass import Feature
-from jishaku.cog import STANDARD_FEATURES, OPTIONAL_FEATURES
+import jishaku
 import humanize
 from discord.ext import commands
-from jishaku.features.baseclass import Feature
 from jishaku.flags import JISHAKU_HIDE
 from jishaku.meta import __version__
 from jishaku.modules import package_version

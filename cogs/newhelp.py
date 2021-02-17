@@ -29,7 +29,7 @@ Please note: this is a work in progress.
 
 class HelpCommand(commands.HelpCommand):
     def __init__(self):
-        super().__init__(command_attrs={'description': 'shows this message'})
+        super().__init__(command_attrs={'description': 'shows this message', 'help': 'shows this message. you can also do !help [command] for more info on a command.\nexample: !help fish'})
     # This fires once someone does `<prefix>help`
     async def send_bot_help(self, mapping: Mapping[typing.Optional[commands.Cog], typing.List[commands.Command]]):
         ctx = self.context
@@ -60,6 +60,7 @@ class HelpCommand(commands.HelpCommand):
 
     # This fires once someone does `<prefix>help <group>`
     async def send_group_help(self, group: commands.Group):
+        ctx = self.context
         new_msg = base_msg_command
         _ = [f"{sc.name}|" for sc in group.commands]
         subcommands = "".join(_)

@@ -87,12 +87,12 @@ with open("TOKEN.txt",'r') as t:
 userid = '695328763960885269'
 myname = "Fishy.py"
 sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=289856&scope=bot"
-defaultprefix = '!!'
+defaultprefix = '!'
 async def get_prefix(bot, message):
     return bot.prefixes.get(message.guild.id, defaultprefix)
 bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions = True, messages = True, guilds = True, members = True))
 bot.remove_command('help')
-initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.funnypicture', 'cogs.shop','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
+initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shop','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
 
 #BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168

@@ -112,13 +112,15 @@ class player:
             await self.bot.db.execute("UPDATE f_users SET trophyoid = ? WHERE userid = ?",(caughtoid, self.id,))
             await self.bot.db.execute("UPDATE f_users SET trophyrodlvl = ? WHERE userid = ?",(self.rod_level, self.id,))
             await self.bot.db.commit()
+            return
         if caughtfish.original_length > trophyfish.original_length:
             await self.bot.db.execute("UPDATE f_users SET trophyoid = ? WHERE userid = ?",(caughtoid, self.id,))
             await self.bot.db.execute("UPDATE f_users SET trophyrodlvl = ? WHERE userid = ?",(self.rod_level, self.id,))
             await self.bot.db.commit()
+            return
         else:
             # Caught fish is shorter than trophy length
-            pass
+            return
     
     async def update_review(self, reviewtext):
         try:
@@ -172,7 +174,8 @@ class player:
         data = await c.fetchone()
         fish_range = (0.9) * math.floor(self.rod)
         c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes WHERE fishlength <= ?",(fish_range,))
-        fish_in_range = (await c.fetchone())[0]
+        result = await c.fetchone()
+        fish_in_range = result[0]
         fish_range = math.floor(1.0 * fish_in_range)
         return rod(self.bot, data, fish_range)
 
