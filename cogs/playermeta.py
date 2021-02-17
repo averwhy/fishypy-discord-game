@@ -77,7 +77,7 @@ class playermeta(commands.Cog):
         embed.set_footer(text=f"#{fish.db_position} out of 16206 catchable fish in the database")
         await ctx.reply(embed=embed)
     
-    @commands.group(aliases=["rank","lb","leaderboard"], invoke_without_command=True)
+    @commands.group(aliases=["rank","lb","leaderboard"], invoke_without_command=True, description="user leaderboards")
     async def top(self, ctx):
         await ctx.send_in_codeblock(f"please specify: {ctx.prefix}top (rod, coins, collection, caught)")
     
@@ -126,19 +126,30 @@ class playermeta(commands.Cog):
     @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["collections","cl"])
     async def collection(self, ctx):
-        await ctx.send_in_codeblock("work in progress, sorry")
-        # playeruser = await self.bot.get_player(ctx.author.id)
-        # if playeruser is None:
-        #     return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
-        # step = 1
-        # table = ""
-        # for r in range(10):
-        #     pass
-        # c = await self.bot.db.execute("SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY coins DESC) AS coins FROM f_users) a WHERE userid = ?;",(player.id,)) # i love this statement
-        # player_pos = (await c.fetchone())[1]
-        # table = table + f"(your rank: #{player_pos})"
-        # await self.bot.db.commit()
-        # await ctx.send_in_codeblock(table, language='css')
+        playeruser = await self.bot.get_player(ctx.author.id)
+        if playeruser is None:
+            return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
+        step = 1
+        table = ""
+        c = await self.bot.db.execute("SELECT userid, COUNT(*) FROM f_collections GROUP BY userid")
+        topusers = await c.fetchmany(10)
+        c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes")
+        num_of_fish = await c.fetchone()
+        for r in topusers:
+            player = await self.bot.get_player(r[0])
+            table = table + f"{step}. {player.name} : {r[1]}/{num_of_fish[0]})\n"
+            step += 1
+        c = await self.bot.db.execute("SELECT userid, COUNT(*) FROM f_collections GROUP BY userid")
+        pos = 1
+        for p in (await c.fetchall()):
+            print(p[0])
+            if p[0] == ctx.author.id:
+                break
+            else:
+                pos += 1
+        table = table + f"(your rank: #{pos})"
+        await self.bot.db.commit()
+        await ctx.send_in_codeblock(table, language='css')
     
     @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["totalcaught","tc"])

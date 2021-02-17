@@ -40,9 +40,9 @@ class HelpCommand(commands.HelpCommand):
                 if isinstance(cmd, Group):
                     _ = [f"{sc.name}|" for sc in cmd.commands]
                     subcommands = "".join(_)
-                    new_msg = new_msg + (f"[{cmd.name} {subcommands.removesuffix('|')}][{cmd.description}]\n")
+                    new_msg = new_msg + (f"[{ctx.prefix}{cmd.name} {subcommands.removesuffix('|')}][{cmd.description}]\n")
                 else:
-                    new_msg = new_msg + (f"[{cmd.name}][{cmd.description}]\n")
+                    new_msg = new_msg + (f"[{ctx.prefix}{cmd.name}][{cmd.description}]\n")
         final_msg = new_msg + "\n```"
         await ctx.send(final_msg)
 
@@ -54,7 +54,7 @@ class HelpCommand(commands.HelpCommand):
     async def send_command_help(self, command: commands.Command):
         ctx = self.context
         new_msg = base_msg_command
-        new_msg = new_msg + (f"[{command.name}][{command.description}]\n< {command.help} >")
+        new_msg = new_msg + (f"[{ctx.prefix}{command.name}][{command.description}]\n< {command.help} >")
         final_msg = new_msg + "\n```"
         await ctx.send(final_msg)
 
@@ -64,7 +64,7 @@ class HelpCommand(commands.HelpCommand):
         new_msg = base_msg_command
         _ = [f"{sc.name}|" for sc in group.commands]
         subcommands = "".join(_)
-        final_msg = new_msg + (f"[{group.name} ({subcommands.removesuffix('/')})][{group.description}]\n< {group.help} >")
+        final_msg = new_msg + (f"[{ctx.prefix}{group.name} ({subcommands.removesuffix('/')})][{group.description}]\n< {group.help} >")
         await ctx.send(final_msg)
         
 class newhelp(commands.Cog, command_attrs=dict(hidden=True)):

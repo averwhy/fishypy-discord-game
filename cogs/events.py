@@ -24,7 +24,7 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
     async def on_message(self, message):
         ms = (message.content).strip()
         if ms in [f"{self.bot.user.mention}",f"<@!{self.bot.user.id}>",f"<@?{self.bot.user.id}>"]:
-            return await message.channel.send(f"```Hey, my prefix is {self.bot.prefixes[message.guild.id]}```")
+            return await message.channel.send(f"```hi, my prefix is {self.bot.prefixes[message.guild.id]}```")
     
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):

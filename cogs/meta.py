@@ -45,22 +45,10 @@ class meta(commands.Cog):
             return await ctx.send_in_codeblock("you must have Manage Guild permissions to change the servers prefix", language='ml')
         else:
             return await ctx.send_in_codeblock("Internal Error")
-        
-    @commands.command(description="views bot's news/updates")
-    async def news(self,ctx, *,setnews = None): # for this, the news is a botvar so it doesnt get boned on cog reload
-        if ctx.author.id == OWNER_ID and setnews is not None:
-            self.bot.newstext = setnews
-            self.bot.news_set_by = f"[Developer] {ctx.author.name}"
-            await ctx.message.add_reaction("\U00002705")
-            await ctx.send_in_codeblock("News was set succesfully!")
-            return
-        embed = discord.Embed(title="Fishy.py News",description=self.bot.newstext,colour=discord.Colour.random())
-        embed.set_footer(text=f"News set by {self.bot.news_set_by}")
-        await ctx.send(embed=embed)
             
     @commands.cooldown(1,15,BucketType.user)
-    @commands.command(description="info and stats about bot", aliases=['ping','information'])
-    async def info(self,ctx): # info thing
+    @commands.command(description="info and stats about bot", aliases=['ping','information','info'])
+    async def stats(self,ctx): # info thing
         # get API ping
         start = time.perf_counter()
         message = await ctx.send_in_codeblock("Getting info...", language='css')
@@ -111,7 +99,7 @@ Uptime: {days}d, {hours}h, {minutes}m, {seconds}s```
         embed.add_field(name="Have more questions? Feel free to join the support server and ask averwhy#3899!", value=f"The servers invite can be obtained via the `{ctx.prefix}support` command.",inline=False)
         await ctx.send(embed=embed)
     
-    @commands.cooldown(1,20,BucketType.guild)
+    @commands.cooldown(1,15,BucketType.guild)
     @commands.command(description='invite to the fishy.py support server')
     async def support(self,ctx): # this sends the fishypy support server link
         em = discord.Embed(title="Click me for the support server",url="http://discord.gg/HSqevex",color=discord.Color.blue())
