@@ -21,9 +21,9 @@ class fish:
     
     @staticmethod
     async def fancy_rarity(fish_rarity):
-        if fish_rarity > 1.5:
+        if fish_rarity > 1.3:
             return ["Extremely Rare", 0xfcff00]
-        elif fish_rarity > 1.1:
+        elif fish_rarity > 1.0:
             return ["Very Rare", 0xff00bf]
         elif fish_rarity > 0.8:
             return ["Rare" , 0x0000ff]
