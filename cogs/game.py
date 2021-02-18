@@ -15,15 +15,6 @@ from .utils import botchecks, dbc
 class game(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.image_list = {
-            '🐬':"https://cdn.discordapp.com/attachments/342953709870776322/509381194031562756/file.jpg",
-            '🐉':"https://cdn.discordapp.com/attachments/342953709870776322/509381159923220490/file.jpg",
-            '🐳':"https://cdn.discordapp.com/attachments/342953709870776322/509381129934209046/file.jpg",
-            '🐙':"https://cdn.discordapp.com/attachments/342953709870776322/509381101295239168/file.jpg",
-            '🐡':"https://cdn.discordapp.com/attachments/342953709870776322/509381042210340879/file.jpg",
-            '🐠':"https://cdn.discordapp.com/attachments/342953709870776322/509020495539077140/file.jpg",
-            '🐋':"https://cdn.discordapp.com/attachments/342953709870776322/509020436118503446/file.jpg",
-        }
     
     @commands.Cog.listener()   
     async def on_fish_catch(self, player, fish, coins):
@@ -40,12 +31,16 @@ class game(commands.Cog):
         await player.check_trophy(fish.oid)
         
     def select_3_reactions(self):
-        templist = self.image_list
-        amount_to_remove = (len(templist) - 3) # to have 3 remaining
-        for r in range(amount_to_remove):
-            itr = random.choice(list(templist.keys()))
-            templist.pop(itr, None)
-        return templist
+        image_list = {
+            '🐬':"https://cdn.discordapp.com/attachments/342953709870776322/509381194031562756/file.jpg",
+            '🐉':"https://cdn.discordapp.com/attachments/342953709870776322/509381159923220490/file.jpg",
+            '🐳':"https://cdn.discordapp.com/attachments/342953709870776322/509381129934209046/file.jpg",
+            '🐙':"https://cdn.discordapp.com/attachments/342953709870776322/509381101295239168/file.jpg",
+            '🐡':"https://cdn.discordapp.com/attachments/342953709870776322/509381042210340879/file.jpg",
+            '🐠':"https://cdn.discordapp.com/attachments/342953709870776322/509020495539077140/file.jpg",
+            '🐋':"https://cdn.discordapp.com/attachments/342953709870776322/509020436118503446/file.jpg",
+        }
+        return random.sample(list(image_list.items()), k=3)
     
     def can_fish(self, userid):
         result = [i for i in self.bot.fishers if i == userid]
