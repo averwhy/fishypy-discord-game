@@ -32,7 +32,7 @@ class FishyContext(commands.Context):
         return await self.reply(f"```{lang}\n{content}```", embed=embed, delete_after=delete_after)
         
     async def random_fish(self, rod_level):
-        fish_range = rod_level * 2.9245283018867925
+        fish_range = rod_level * 3.163265306122449
         fish_range = round(fish_range, 1)
         thing = random.choices([True,False], weights=(0.1,0.9),k=1)
         if thing:

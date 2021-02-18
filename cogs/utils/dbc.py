@@ -23,7 +23,7 @@ class fish:
     async def fancy_rarity(fish_rarity):
         if fish_rarity > 1.3:
             return ["Extremely Rare", 0xfcff00]
-        elif fish_rarity > 1.0:
+        elif fish_rarity > 1.05:
             return ["Very Rare", 0xff00bf]
         elif fish_rarity > 0.8:
             return ["Rare" , 0x0000ff]
@@ -173,7 +173,7 @@ class player:
     async def get_rod(self):
         c = await self.bot.db.execute("SELECT * FROM f_rods WHERE level = ?",(self.rod,))
         data = await c.fetchone()
-        fish_range = self.rod * 2.9245283018867925
+        fish_range = self.rod * 3.163265306122449
         fish_range = round(fish_range, 1)
         return rod(self.bot, data, fish_range)
 

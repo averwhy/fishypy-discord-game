@@ -131,6 +131,9 @@ class game(commands.Cog):
         else:
             await ctx.send_in_codeblock(f'Internal error, if this continues please join the support server ({ctx.prefix}support)')
         
+    async def automatic_fishing(self, ctx):
+        pass
+        
     @commands.check(botchecks.ban_check)
     @commands.group(invoke_without_command=True, aliases=["af"], hidden=True)
     async def autofish(self, ctx):
