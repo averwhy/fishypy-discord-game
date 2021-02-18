@@ -40,7 +40,13 @@ class game(commands.Cog):
             '🐠':"https://cdn.discordapp.com/attachments/342953709870776322/509020495539077140/file.jpg",
             '🐋':"https://cdn.discordapp.com/attachments/342953709870776322/509020436118503446/file.jpg",
         }
-        return random.sample(list(image_list.items()), k=3)
+        # return random.sample(list(image_list.items()), k=3)
+        templist = image_list
+        amount_to_remove = (len(templist) - 3) # to have 3 remaining
+        for r in range(amount_to_remove):
+            itr = random.choice(list(templist.keys()))
+            templist.pop(itr, None)
+        return templist
     
     def can_fish(self, userid):
         result = [i for i in self.bot.fishers if i == userid]
