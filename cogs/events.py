@@ -19,6 +19,19 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.Cog.listener()
+    async def on_user_update(self, before, after):
+        if before.name != after.name:
+            cursor = await self.bot.db.execute("SELECT * FROM f_users WHERE userid = ?",(after.id))
+            data = await cursor.fetchone()
+            if data is None:
+                #The user doesnt exist, so do not update
+                return
+            else:
+                #The user is in the database, lets change their name
+                await self.bot.db.execute("UPDATE f_users SET name = ? WHERE userid = ?",(after.name, after.id,))
+                await self.bot.db.commit()
+
 
     @commands.Cog.listener()
     async def on_message(self, message):

@@ -32,13 +32,19 @@ class FishyContext(commands.Context):
         return await self.reply(f"```{lang}\n{content}```", embed=embed, delete_after=delete_after)
         
     async def random_fish(self, rod_level):
-        fish_range = (0.9) * math.floor(rod_level)
-        c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes WHERE fishlength <= ?",(fish_range,))
-        fish_in_range = (await c.fetchone())[0]
-        fish_range = math.floor(random.uniform(0,1) * fish_in_range)
-        if fish_range <= 0: fish_range = 1 # to prevent 0's
-        cur = await self.bot.db.execute("SELECT * FROM fishes WHERE fishlength <= ? AND fishlength >= ? ORDER BY RANDOM();",(fish_range, math.floor(rod_level),))
-        data = await cur.fetchone()
+        fish_range = rod_level * 2.9245283018867925
+        fish_range = round(fish_range, 1)
+        thing = random.choices([True,False], weights=(0.1,0.9),k=1)
+        if thing:
+            cur = await self.bot.db.execute("SELECT * FROM fishes WHERE fishlength <= ? AND fishlength >= ? ORDER BY RANDOM();",(fish_range, math.floor(rod_level),))
+            data = await cur.fetchone()
+            if data is None:
+                cur = await self.bot.db.execute("SELECT * FROM fishes WHERE fishlength <= ? ORDER BY RANDOM();",(fish_range,))
+                data = await cur.fetchone()
+            else: pass
+        else:
+            cur = await self.bot.db.execute("SELECT * FROM fishes WHERE fishlength <= ? ORDER BY RANDOM();",(fish_range,))
+            data = await cur.fetchone()
         return dbc.fish(self.bot, data)
 
 class FpyBot(commands.Bot):
@@ -91,13 +97,12 @@ defaultprefix = '!'
 async def get_prefix(bot, message):
     return bot.prefixes.get(message.guild.id, defaultprefix)
 bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions = True, messages = True, members = False, guilds = True))
-bot.remove_command('help')
 initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shop','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
 
 #BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168
 bot.launch_time = datetime.utcnow()
-bot.version = '1.1.0'
+bot.version = '1.1.1'
 bot.socket_sent_counter = 0
 bot.socket_recieved_counter = 0
 bot.fishCaughtinsession = 0

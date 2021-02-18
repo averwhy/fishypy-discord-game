@@ -106,7 +106,7 @@ class game(commands.Cog):
     
     @commands.command(name="fish",description="fishy.py's fish game")
     async def fish(self, ctx):
-        """The main fish game for Fishy.py.\nTo play, run the command, then click on the correct reaction. It will keep going over and over until you get it wrong."""
+        """The main fish game for Fishy.py.\nTo play, run the command, then click on the correct reaction shown in the embed. It will keep going over and over until you get it wrong."""
         player = await self.bot.get_player(ctx.author.id)
         if player is None: return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         can_fish = self.can_fish(ctx.author.id)
@@ -121,6 +121,15 @@ class game(commands.Cog):
                 continue
         return
     
+    @fish.error
+    async def on_fish_error(self, ctx, error):
+        if isinstance(error, botchecks.FishNotFound):
+            self.bot.fishers.remove(ctx.author.id)
+            await ctx.send_in_codeblock(f"error while fishing, please try again, if this continues please join the support server ({ctx.prefix}support)")
+            return
+        else:
+            await ctx.send_in_codeblock(f'Internal error, if this continues please join the support server ({ctx.prefix}support)')
+        
     @commands.check(botchecks.ban_check)
     @commands.group(invoke_without_command=True, aliases=["af"], hidden=True)
     async def autofish(self, ctx):

@@ -31,11 +31,8 @@ class fish:
             return ["Common", 0x40ff00]
     
     def coins(self, rod_level):
-        if self.original_length > 100:
-            temp = self.original_length / 100
-        else:
-            temp = 1
-        return ((self.rarity * temp * math.floor(rod_level)) * (round(random.uniform(1.0,2.0),1)) * 1.5)
+        math = ((self.rarity * (self.original_length * 2)) * (1 + (rod_level * 0.01)))
+        return round(math, 1)
 
 class player:
     def __init__(self, bot, data):
@@ -176,11 +173,8 @@ class player:
     async def get_rod(self):
         c = await self.bot.db.execute("SELECT * FROM f_rods WHERE level = ?",(self.rod,))
         data = await c.fetchone()
-        fish_range = (0.8) * math.floor(self.rod)
-        c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes WHERE fishlength <= ?",(fish_range,))
-        result = await c.fetchone()
-        fish_in_range = result[0]
-        fish_range = math.floor(1.0 * fish_in_range)
+        fish_range = self.rod * 2.9245283018867925
+        fish_range = round(fish_range, 1)
         return rod(self.bot, data, fish_range)
 
 class rod:

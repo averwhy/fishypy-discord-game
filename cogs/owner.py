@@ -26,11 +26,12 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
     """
     def __init__(self,bot):
         self.bot = bot
+        self.backup_task = self.database_backup_task.start()
     
     async def cog_check(self,ctx):
         return ctx.author.id == OWNER_ID
         
-    @tasks.loop(minutes=30)
+    @tasks.loop(minutes=10)
     async def database_backup_task(self):
         try:
             await self.bot.db.commit()

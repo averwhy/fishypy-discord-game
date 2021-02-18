@@ -26,10 +26,14 @@ class meta(commands.Cog):
         if len(prefix) > 10:
             return await ctx.send_in_codeblock('Prefix is too long')
         if prefix.strip() == self.bot.defaultprefix:
+            cur = await self.bot.db.execute("SELECT * FROM f_prefixes WHERE guildid = ?",(ctx.guild.id,))
+            if (await cur.fetchone()) is None:
+                await ctx.send_in_codeblock("the prefix is already !")
             self.bot.prefixes.pop(ctx.guild.id)
             await self.bot.db.execute("DELETE FROM f_prefixes WHERE guildid = ?",(ctx.guild.id,))
             await self.bot.db.commit()
             await ctx.send_in_codeblock("prefix reset to default prefix !")
+            return
         self.bot.prefixes[ctx.guild.id] = prefix
         cur = await self.bot.db.execute("SELECT * FROM f_prefixes WHERE guildid = ?",(ctx.guild.id,))
         if (await cur.fetchone()) is None:
