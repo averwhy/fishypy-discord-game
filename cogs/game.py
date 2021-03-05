@@ -6,7 +6,7 @@ import os, sys, random
 import aiosqlite
 import discord
 from datetime import datetime
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
 
@@ -15,6 +15,12 @@ from .utils import botchecks, dbc
 class game(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+    
+    @tasks.loop(seconds=10)
+    async def do_autofishing(self):
+        for e in self.bot.autofishers:
+            for i in e:
+                pass
     
     @commands.Cog.listener()   
     async def on_fish_catch(self, player, fish, coins):
@@ -49,8 +55,7 @@ class game(commands.Cog):
         return templist
     
     def can_fish(self, userid):
-        result = [i for i in self.bot.fishers if i == userid]
-        if result == []:
+        if not userid in self.bot.fishers:
             self.bot.fishers.append(userid)
             return True
         return False
@@ -83,6 +88,7 @@ class game(commands.Cog):
         fish = await ctx.random_fish(player.rod)
         splitname = fish.name.split()
         caught_before = "" if (await player.check_collection(fish.oid)) else " (NEW)"
+        coin_bonus = "" if self.bot.coin_multiplier == 1.0 else f" **x{self.bot.coin_multiplier}**"
         threereactions = self.select_3_reactions()
         correct_emoji, correct_emoji_url = random.choice(list(threereactions.items()))
         fancy_rarity = await dbc.fish.fancy_rarity(fish.rarity)
@@ -91,7 +97,7 @@ class game(commands.Cog):
         embed.set_image(url=fish.image_url)
         embed.add_field(name='__Length__',value=f'{fish.original_length}cm')
         embed.add_field(name='__Rarity__',value=f'{fancy_rarity[0].upper()}')
-        embed.add_field(name='__Coins Earned__', value=f'{round(((fish.coins(player.rod_level)) * self.bot.coin_multiplier), 3)} coins')
+        embed.add_field(name='__Coins Earned__', value=f'{round(((fish.coins(player.rod_level)) * self.bot.coin_multiplier), 3)} coins {coin_bonus}')
         await msg.edit(embed=embed)
         self.bot.dispatch("fish_catch", player, fish, round(((fish.coins(player.rod_level)) * self.bot.coin_multiplier), 3))
     
@@ -108,7 +114,7 @@ class game(commands.Cog):
     @commands.command(name="fish",description="fishy.py's fish game")
     async def fish(self, ctx):
         """The main fish game for Fishy.py.\nTo play, run the command, then click on the correct reaction shown in the embed. It will keep going over and over until you get it wrong."""
-        player = await self.bot.get_player(ctx.author.id)
+        player = await self.bot.get_player(ctx.author)
         if player is None: return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         can_fish = self.can_fish(ctx.author.id)
         if not can_fish:
@@ -130,14 +136,14 @@ class game(commands.Cog):
             return
         else:
             await ctx.send_in_codeblock(f'Internal error, if this continues please join the support server ({ctx.prefix}support)')
-        
-    async def automatic_fishing(self, ctx):
-        pass
-        
-    @commands.check(botchecks.ban_check)
-    @commands.group(invoke_without_command=True, aliases=["af"], hidden=True)
+    
+      
+    @commands.group(invoke_without_command=True, aliases=["af"], hidden=True, enabled=False)
     async def autofish(self, ctx):
-        """The autofish command. Currently a WIP."""
+        """The base autofish command. Invoking with no subcommand shows autofishing stats."""
+        is_fishing = ctx.author.id in self.bot.autofishers
+        summary = f"autofishing: {str(is_fishing).lower()}"
+        summary = summary + f"notifications level: "
         await ctx.send_in_codeblock("Coming soon")
                 
 def setup(bot):

@@ -16,14 +16,21 @@ from .utils import dbc
 class playermeta(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-            
+    
+    @commands.Cog.listener()
+    async def on_user_update(self, before, after):
+        if before.name != after.name:
+            if (await self.bot.usercheck(before.id)):
+                await self.bot.db.execute("UPDATE f_users SET name = ? WHERE userid = ?")
+                await self.bot.db.commit()
+    
     @commands.check(botchecks.ban_check)
     @commands.command(aliases=["prof","me"], description="player profile, rod level, collection")
     async def profile(self, ctx, user: discord.User = None): # profile command
         """shows you your player profile (coins, collection, total caught, trophy, etc). \nyou can also view other users profiles, for example !profile @Fishy.py"""
         if user is None:
             user = ctx.author
-        playeruser = await self.bot.get_player(user.id)
+        playeruser = await self.bot.get_player(user)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         collection_length = await self.bot.db.execute("SELECT COUNT(*) FROM f_collections WHERE userid = ?",(user.id,))
@@ -62,7 +69,7 @@ class playermeta(commands.Cog):
         """shows your trophy (longest fish caught)\ncan also view another users trophy, for example: !trophy @Fishy.py"""
         if user is None:
             user = ctx.author
-        playeruser = await self.bot.get_player(user.id)
+        playeruser = await self.bot.get_player(user)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         fish = await self.bot.get_fish(playeruser.trophy_oid)
@@ -84,7 +91,7 @@ class playermeta(commands.Cog):
     @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["rods","r"])
     async def rod(self, ctx):
-        playeruser = await self.bot.get_player(ctx.author.id)
+        playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         lvl = playeruser.rod_level
@@ -97,7 +104,7 @@ class playermeta(commands.Cog):
             player_rod = await player.get_rod()
             table = table + f"{step}. {player.name} : {player_rod.name} (lvl {player_rod.level})\n"
             step += 1
-        c = await self.bot.db.execute("SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY rodlevel DESC) AS rodlevel FROM f_users) a WHERE userid = ?;",(player.id,)) # i love this statement
+        c = await self.bot.db.execute("SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY rodlevel DESC) AS rodlevel FROM f_users) a WHERE userid = ?;",(playeruser.id,)) # i love this statement
         player_pos = (await c.fetchone())[1]
         table = table + f"(your rank: #{player_pos})"
         await self.bot.db.commit()
@@ -106,7 +113,7 @@ class playermeta(commands.Cog):
     @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["coins","c"])
     async def coin(self, ctx):
-        playeruser = await self.bot.get_player(ctx.author.id)
+        playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         cur = await self.bot.db.execute("SELECT * FROM f_users ORDER BY coins DESC")
@@ -117,7 +124,7 @@ class playermeta(commands.Cog):
             player = await self.bot.get_player(r[0])
             table = table + f"{step}. {player.name} : {player.coins} coins)\n"
             step += 1
-        c = await self.bot.db.execute("SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY coins DESC) AS coins FROM f_users) a WHERE userid = ?;",(player.id,)) # i love this statement
+        c = await self.bot.db.execute("SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY coins DESC) AS coins FROM f_users) a WHERE userid = ?;",(playeruser.id,)) # i love this statement
         player_pos = (await c.fetchone())[1]
         table = table + f"(your rank: #{player_pos})"
         await self.bot.db.commit()
@@ -126,24 +133,24 @@ class playermeta(commands.Cog):
     @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["collections","cl"])
     async def collection(self, ctx):
-        playeruser = await self.bot.get_player(ctx.author.id)
+        playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         step = 1
         table = ""
         c = await self.bot.db.execute("SELECT userid, COUNT(*) FROM f_collections GROUP BY userid")
-        topusers = await c.fetchmany(10)
+        topusers = await c.fetchall()
+        sortedtopusers = sorted(topusers, key = lambda x: x[1], reverse=True)
         c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes")
         num_of_fish = await c.fetchone()
-        for r in topusers:
+        for r in sortedtopusers:
             player = await self.bot.get_player(r[0])
             table = table + f"{step}. {player.name} : {r[1]}/{num_of_fish[0]})\n"
             step += 1
-        c = await self.bot.db.execute("SELECT userid, COUNT(*) FROM f_collections GROUP BY userid")
+            if step == 10: break
         pos = 1
-        for p in (await c.fetchall()):
-            print(p[0])
-            if p[0] == ctx.author.id:
+        for r in sortedtopusers:
+            if r[0] == playeruser.id:
                 break
             else:
                 pos += 1
@@ -154,7 +161,7 @@ class playermeta(commands.Cog):
     @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["totalcaught","tc"])
     async def caught(self, ctx):
-        playeruser = await self.bot.get_player(ctx.author.id)
+        playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         cur = await self.bot.db.execute("SELECT * FROM f_users ORDER BY totalcaught DESC")
@@ -165,7 +172,7 @@ class playermeta(commands.Cog):
             player = await self.bot.get_player(r[0])
             table = table + f"{step}. {player.name} : {player.total_caught} total caught fish)\n"
             step += 1
-        c = await self.bot.db.execute("SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY totalcaught DESC) AS totalcaught FROM f_users) a WHERE userid = ?;",(player.id,)) # i love this statement
+        c = await self.bot.db.execute("SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY totalcaught DESC) AS totalcaught FROM f_users) a WHERE userid = ?;",(playeruser.id,)) # i love this statement
         player_pos = (await c.fetchone())[1]
         table = table + f"(your rank: #{player_pos})"
         await self.bot.db.commit()

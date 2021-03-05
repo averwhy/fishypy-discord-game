@@ -55,7 +55,7 @@ class FpyBot(commands.Bot):
         return await super().get_context(message, cls=cls)
     
     async def usercheck(self, user): # this function checks if the user exists in the DB
-        if isinstance(user, discord.User) or isinstance(user, discord.Member):
+        if isinstance(user, (discord.User, discord.Member)):
             user = user.id
         elif isinstance(user, int):
             pass
@@ -68,11 +68,23 @@ class FpyBot(commands.Bot):
             return False #Not In database
         return True #in database
         
-    async def get_player(self, pid):
-        c = await self.db.execute("SELECT * FROM f_users WHERE userid = ?",(pid,))
+    async def get_player(self, user):
+        if isinstance(user, int):
+            #looks like an user ID, lets convert
+            userobj = self.get_user(user)
+            if userobj is None:
+                userobj = await self.fetch_user(user)
+            if userobj is None:
+                return None
+        elif isinstance(user, (discord.User, discord.Member)):
+            userobj = user
+        else:
+            raise TypeError(f"get_player takes either int or discord.User or discord.Member, not {type(user)}")
+        
+        c = await self.db.execute("SELECT * FROM f_users WHERE userid = ?",(userobj.id,))
         data = await c.fetchone()
         if data is None: return data
-        return dbc.player(self, data)
+        return dbc.player(self, data, userobj)
     
     async def get_fish(self, oid):
         """Gets a fish by OID, returns None if theres nothing matching."""
@@ -95,6 +107,8 @@ myname = "Fishy.py"
 sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=289856&scope=bot"
 defaultprefix = '!'
 async def get_prefix(bot, message):
+    if message.guild is None:
+        return ""
     return bot.prefixes.get(message.guild.id, defaultprefix)
 bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions = True, messages = True, members = False, guilds = True))
 initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shop','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
@@ -102,7 +116,7 @@ initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shop','
 #BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168
 bot.launch_time = datetime.utcnow()
-bot.version = '1.1.1'
+bot.version = '1.1.2'
 bot.socket_sent_counter = 0
 bot.socket_recieved_counter = 0
 bot.fishCaughtinsession = 0
@@ -113,12 +127,14 @@ bot.defaultprefix = defaultprefix
 bot.coin_multiplier = 1.0
 bot.seconds_to_react = 5
 bot.fishers = []
+bot.autofishers = []
 bot.uses = {}
 bot.rodsbought = 0
+bot.last_backup_message = ""
 async def startup(bot):
     bot.db = await aiosqlite.connect('fpy.db')
     await bot.db.execute('CREATE TABLE IF NOT EXISTS f_prefixes (guildid int, prefix text)')
-    await bot.db.execute('CREATE TABLE IF NOT EXISTS f_users (userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer, totalcaught int)')
+    await bot.db.execute('CREATE TABLE IF NOT EXISTS f_users (userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer, totalcaught int, autofishingnotif int)')
     await bot.db.execute("CREATE TABLE IF NOT EXISTS f_bans (userid int, bannedwhen blob, reason text)")
     await bot.db.execute("CREATE TABLE IF NOT EXISTS f_collections (userid int, oid blob)")
     await bot.db.execute("CREATE TABLE IF NOT EXISTS f_rods (level int, name text, cost int)") # Not for users

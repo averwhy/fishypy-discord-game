@@ -25,7 +25,7 @@ class shop(commands.Cog):
     @_shop.command(aliases=["rod","r"])
     async def rods(self, ctx):
         """shows you your current rod, and the upcoming rods you can buy."""
-        playeruser = await self.bot.get_player(ctx.author.id)
+        playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         
@@ -55,7 +55,7 @@ class shop(commands.Cog):
     @upgrade.command(name='rod')
     async def _rod(self, ctx):
         """buys the next avaliable rod automatically, if you have enough coins."""
-        playeruser = await self.bot.get_player(ctx.author.id)
+        playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         

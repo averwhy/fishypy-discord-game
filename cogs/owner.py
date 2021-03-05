@@ -7,18 +7,11 @@ from discord.ext.commands import CheckFailure, check
 import asyncio
 import aiosqlite
 import random
+import humanize
 from discord.ext import menus
 from datetime import datetime
+from .utils import botmenus
 OWNER_ID = 267410788996743168
-
-class SQLSource(menus.ListPageSource):
-    def __init__(self, data):
-        super().__init__(data, per_page=1)
-
-    async def format_page(self, menu, entries):
-        embed = discord.Embed(description=f"```css\n{entries}\n```",color=discord.Color.random())
-        return embed
-
 
 class owner(commands.Cog, command_attrs=dict(hidden=True)):
     """
@@ -39,9 +32,10 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
             await self.bot.db.backup(self.bot.backup_db)
             await self.bot.backup_db.commit()
             await self.bot.backup_db.close()
+            self.bot.last_backup_message = f"The database backed up successfully at {str(datetime.utcnow())}"
             return
         except Exception as e:
-            print(f"An error occured while backing up the database: {e}")
+            self.bot.last_backup_message = f"An error occured while backing up the database at {str(datetime.utcnow())}: {e}"
             return
         
     
@@ -125,7 +119,7 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
             cur = await self.bot.db.execute(statement)
             fetchedone = await cur.fetchone()
             fetchedall = await cur.fetchone()
-            pages = menus.MenuPages(source=SQLSource([fetchedone, fetchedall]), clear_reactions_after=True)
+            pages = menus.MenuPages(source=botmenus.SQLSource([fetchedone, fetchedall]), clear_reactions_after=True)
             await pages.start(ctx)
         except Exception as e:
             return await ctx.send_in_codeblock((f"[{e}]"), language='css')

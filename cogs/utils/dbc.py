@@ -1,7 +1,7 @@
 import aiosqlite
 import math, random
 import typing
-from discord import User as DiscordUser
+import discord
 from cogs.utils.botchecks import FishNotFound
 from datetime import datetime
 import enum
@@ -35,7 +35,7 @@ class fish:
         return round(math, 1)
 
 class player:
-    def __init__(self, bot, data):
+    def __init__(self, bot, data, user):
         self.bot = bot
         self.id = int(data[0])
         self.name = str(data[1])
@@ -52,9 +52,12 @@ class player:
         except: self.review_message_id = None
         self.hex_color = str(data[7])
         self.total_caught = int(data[9])
+        if not isinstance(user, (discord.User, discord.Member)):
+            raise TypeError()
+        self.user = user
         
     @staticmethod
-    async def create(bot, user: DiscordUser):
+    async def create(bot, user: discord.User):
         player = await bot.usercheck(user.id)
         if player:
             return False

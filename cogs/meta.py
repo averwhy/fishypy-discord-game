@@ -23,6 +23,8 @@ class meta(commands.Cog):
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     @commands.command(name='prefix',aliases=["pre"],description="changing bot prefix for server(admins only)")
     async def set_prefix(self, ctx, prefix):
+        if ctx.guild is None:
+            return await ctx.send_in_codeblock("prefix cannot be changed in dm's")
         if len(prefix) > 10:
             return await ctx.send_in_codeblock('Prefix is too long')
         if prefix.strip() == self.bot.defaultprefix:
