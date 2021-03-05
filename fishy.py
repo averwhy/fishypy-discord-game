@@ -110,7 +110,7 @@ async def get_prefix(bot, message):
     if message.guild is None:
         return ""
     return bot.prefixes.get(message.guild.id, defaultprefix)
-bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions = True, messages = True, members = False, guilds = True))
+bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions=True, messages=True, members=True, guilds=True))
 initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shop','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
 
 #BOT#VARS#####################################################################################################
