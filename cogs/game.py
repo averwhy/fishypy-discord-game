@@ -84,13 +84,11 @@ class game(commands.Cog):
         if not got_it_correct:
             return await self.stop_fishing(ctx, updatedmsg)
         await msg.add_reaction('✅')
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.3)
         fish = await ctx.random_fish(player.rod)
         splitname = fish.name.split()
         caught_before = "" if (await player.check_collection(fish.oid)) else " (NEW)"
         coin_bonus = "" if self.bot.coin_multiplier == 1.0 else f" **x{self.bot.coin_multiplier}**"
-        threereactions = self.select_3_reactions()
-        correct_emoji, correct_emoji_url = random.choice(list(threereactions.items()))
         fancy_rarity = await dbc.fish.fancy_rarity(fish.rarity)
         embed = discord.Embed(title=f"{fish.name}{caught_before}",url=f"https://www.fishbase.de/Summary/{splitname[0]}-{splitname[1]}.html", color=fancy_rarity[1])
         embed.set_thumbnail(url=correct_emoji_url)
