@@ -1,3 +1,5 @@
 package-lock.json
 node_modules
 .gitignore
+__pycache__/
+.TOKEN
