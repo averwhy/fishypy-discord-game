@@ -7,14 +7,16 @@ categories = ["Hand Net", "Push Net", "Bottom Trawl", "Cast Net", "Drag Net", "C
 
 price = 0
 netnum = 0
-mins = 5
+mins = 5.0
 for c in categories:
     for r in nets1:
         netnum += 1
-        price_increase = random.randint(50,150)
-        price += price_increase
         name = f"{r} {c}"
-        print(f"{netnum}. {name}")
-        #conn.execute("INSERT INTO f_nets VALUES (?, ?, ?)",(netnum, name, price,))
+        conn.execute("INSERT INTO f_nets VALUES (?, ?, ?, ?)",(netnum, name, price, mins,))
+        print(f"{netnum}. {name} ({price} coins) ({mins} mins)")
+        price_increase = random.randint(450,650)
+        price += price_increase
+        mins += 1
+        mins = round(mins, 1)
 conn.commit()
 conn.close()

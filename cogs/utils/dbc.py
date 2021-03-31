@@ -65,32 +65,56 @@ class player:
         self.user = user
         self.autofishing_notif = int(data[10])
         self.net = self.net_level = int(data[11])
-        
+      
     @staticmethod
     async def create(bot, user: discord.User):
         player = await bot.usercheck(user.id)
         if player:
             return False
         #(userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer)
-        await bot.db.execute("INSERT INTO f_users VALUES (?, ?, 0, 1, 0, 'none', 0, 'none', 0, 0)",(user.id, user.name,))
+        await bot.db.execute("INSERT INTO f_users VALUES (?, ?, 0, 1, 0, 'none', 0, 'none', 0, 0, 1, 1)",(user.id, user.name,))
         await bot.db.commit()
         return True
+    
+    def fancy_af_notif(self):
+        if self.autofishing_notif >= 5:
+            return 'no notifications'
+        elif self.autofishing_notif >= 4:
+            return 'extremely rare only'
+        elif self.autofishing_notif >= 3:
+            return 'very rare and above'
+        elif self.autofishing_notif >= 2:
+            return 'rare and above'
+        elif self.autofishing_notif >= 1:
+            return 'all rarities'
+        else:
+            return None
 
-    async def update(self):
+    async def update(self, user):
         """Updates the objects data, i'd rather do this than create a new object"""
         cur = await self.bot.db.execute("SELECT * FROM f_users WHERE userid = ?",(self.id,))
         data = await cur.fetchone()
         if data is None:
             return False
-        self.bot = bot
         self.id = int(data[0])
         self.name = str(data[1])
         self.guild_id = int(data[2])
-        self.rod = int(data[3])
-        self.rod_level = self.rod #Alias
+        self.rod = self.rod_level = int(data[3])
         self.coins = float(data[4])
-        self.total_caught = int(data[9])
         self.as_of = datetime.utcnow() # shows how up to date the object is
+        try: self.trophy_oid = str(data[5])
+        except: self.trophy_oid = None
+        try: self.trophy_rod_level = int(data[6])
+        except: self.trophy_rod_level = None
+        try: self.review_message_id = int(data[8])
+        except: self.review_message_id = None
+        self.hex_color = str(data[7])
+        self.total_caught = int(data[9])
+        if not isinstance(user, (discord.User, discord.Member)):
+            raise TypeError()
+        self.user = user
+        self.autofishing_notif = int(data[10])
+        self.net = self.net_level = int(data[11])
         return True
 
     async def check_collection(self, oid):
@@ -209,7 +233,7 @@ class net:
         self.level = int(data[0])
         self.name = str(data[1])
         self.cost = int(data[2])
-        self.minutes = int(data[3])
+        self.minutes = self.mins = int(data[3])
 
 class server:
     def __init__(self, bot):

@@ -7,11 +7,12 @@ import os, sys
 import aiosqlite
 import discord
 from datetime import datetime
-from discord.ext import commands
+from discord.ext import commands, menus
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
-from .utils import botchecks
+from .utils import botchecks, botmenus
 from .utils import dbc
+OWNER_ID = 267410788996743168
 
 class playermeta(commands.Cog):
     def __init__(self, bot):
@@ -34,12 +35,18 @@ class playermeta(commands.Cog):
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         collection_length = await self.bot.db.execute("SELECT COUNT(*) FROM f_collections WHERE userid = ?",(user.id,))
-        embed = discord.Embed(title=user.name)
+        is_verified = "  <:verified:826441930254057493>" if (await self.bot.is_verified(user)) else ""
+        is_dev = "  <:developer:826440754809012244>" if user.id in [OWNER_ID, 163247205757616128] else ""
+        is_bughunter = "  <:bughunter:826483661552484352>" if user.id in [267410788996743168, 187056629223522305, 715143242093690931, 610904174636564500, 443791364073848833] else ""
+        is_staff = "  <:stafftools:826487050366353408>" if user.id in [267410788996743168, 163247205757616128, 509560211460194335, 708715777993211926] else ""
+        embed = discord.Embed(title=f"{user.name}{is_dev}{is_verified}{is_staff}{is_bughunter}")
         embed.add_field(name="__Coins__", value=round(playeruser.coins,2))
         embed.add_field(name="__Collection__", value=(await playeruser.get_collection()))
         embed.add_field(name="__Total Caught__", value=f"{playeruser.total_caught} fish")
         playerrod = await playeruser.get_rod()
         embed.add_field(name="__Rod__", value=f"**{playerrod.name}** (Max length {playerrod.max_length}cm)")
+        playernet = await playeruser.get_net()
+        embed.add_field(name="__Net__", value=f"**{playernet.name}** (Autofishing mins: {playernet.mins})")
         embed.set_thumbnail(url=user.avatar_url)
         if playeruser.trophy_oid not in [None, 'none']:
             playertrophy = await self.bot.get_fish(playeruser.trophy_oid)
@@ -60,7 +67,24 @@ class playermeta(commands.Cog):
         if result:
             selected_reaction = (random.choices(reactions, weights=[0.8, 0.1, 0.1], k=1))[0]
             return await ctx.message.add_reaction(selected_reaction)
-        await ctx.reply_in_codeblock("you're already in the database")
+        if not result:
+            await ctx.reply_in_codeblock(f"you're already in the database\nhowever, you can also delete all of your data if you wish. to do this, run the command [{ctx.prefix}removeme]")
+            
+    @commands.command(hidden=True, aliases=["optout","deleteme","stop"])
+    async def removeme(self, ctx):
+        """deletes all of your data from the bot. this is completely irreversible."""
+        playeruser = await self.bot.get_player(ctx.author)
+        if playeruser is None:
+            return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
+        confirm = await ctx.send_in_codeblock("- warning! deleting all of your data is absolutely irreversible.\nyou will lose your entire profile (coins, rods, nets, caught fish, collection, position on leaderboards, etc)\nyou cannot go back. are you sure you want all of your data to be deleted?",language='diff')
+        did_they = await self.bot.prompt(ctx.author.id, confirm, timeout=15)
+        if did_they:
+            await self.bot.db.execute("DELETE FROM f_users WHERE userid = ?", (ctx.author.id,))
+            await self.bot.db.execute("DELETE FROM f_collections WHERE userid = ?", (ctx.author.id,))
+            await self.bot.db.commit()
+            await ctx.reply_in_codeblock("done, i've deleted all of your data.")
+        if not did_they:
+            await ctx.reply_in_codeblock("cancelled. none of your data was deleted.")
       
     @commands.check(botchecks.ban_check)
     @commands.cooldown(1,5,BucketType.user)
@@ -111,6 +135,28 @@ class playermeta(commands.Cog):
         await ctx.send_in_codeblock(table, language='css')
     
     @commands.cooldown(1, 10, BucketType.user)
+    @top.command(aliases=["nets","n"])
+    async def net(self, ctx):
+        playeruser = await self.bot.get_player(ctx.author)
+        if playeruser is None:
+            return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
+        lvl = playeruser.net_level
+        cur = await self.bot.db.execute("SELECT * FROM f_users ORDER BY netlevel DESC")
+        topusers = await cur.fetchmany(10)
+        step = 1
+        table = ""
+        for r in topusers:
+            player = await self.bot.get_player(r[0])
+            player_net = await player.get_net()
+            table = table + f"{step}. {player.name} : {player_net.name} (lvl {player_net.level})\n"
+            step += 1
+        c = await self.bot.db.execute("SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY netlevel DESC) AS netlevel FROM f_users) a WHERE userid = ?;",(playeruser.id,)) # i love this statement
+        player_pos = (await c.fetchone())[1]
+        table = table + f"(your rank: #{player_pos})"
+        await self.bot.db.commit()
+        await ctx.send_in_codeblock(table, language='css')
+    
+    @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["coins","c"])
     async def coin(self, ctx):
         playeruser = await self.bot.get_player(ctx.author)
@@ -136,26 +182,27 @@ class playermeta(commands.Cog):
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
-        step = 1
-        table = ""
-        c = await self.bot.db.execute("SELECT userid, COUNT(*) FROM f_collections GROUP BY userid")
-        topusers = await c.fetchall()
-        sortedtopusers = sorted(topusers, key = lambda x: x[1], reverse=True)
-        c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes")
-        num_of_fish = await c.fetchone()
-        for r in sortedtopusers:
-            player = await self.bot.get_player(r[0])
-            table = table + f"{step}. {player.name} : {r[1]}/{num_of_fish[0]})\n"
-            step += 1
-            if step == 10: break
-        pos = 1
-        for r in sortedtopusers:
-            if r[0] == playeruser.id:
-                break
-            else:
-                pos += 1
-        table = table + f"(your rank: #{pos})"
-        await self.bot.db.commit()
+        async with ctx.channel.typing():
+            step = 1
+            table = ""
+            c = await self.bot.db.execute("SELECT userid, COUNT(*) FROM f_collections GROUP BY userid")
+            topusers = await c.fetchall()
+            sortedtopusers = sorted(topusers, key = lambda x: x[1], reverse=True)
+            c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes")
+            num_of_fish = await c.fetchone()
+            for r in sortedtopusers:
+                player = await self.bot.get_player(r[0])
+                table = table + f"{step}. {player.name} : {r[1]}/{num_of_fish[0]})\n"
+                step += 1
+                if step == 10: break
+            pos = 1
+            for r in sortedtopusers:
+                if r[0] == playeruser.id:
+                    break
+                else:
+                    pos += 1
+            table = table + f"(your rank: #{pos})"
+            await self.bot.db.commit()
         await ctx.send_in_codeblock(table, language='css')
     
     @commands.cooldown(1, 10, BucketType.user)
@@ -177,6 +224,18 @@ class playermeta(commands.Cog):
         table = table + f"(your rank: #{player_pos})"
         await self.bot.db.commit()
         await ctx.send_in_codeblock(table, language='css')
+    
+    
+    @commands.cooldown(1, 60, BucketType.user)
+    @commands.command(description="view all fish in your collection with an interactive menu")
+    async def collection(self, ctx):
+        playeruser = await self.bot.get_player(ctx.author)
+        if playeruser is None:
+            return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
+        c = await self.bot.db.execute("SELECT oid FROM f_collections WHERE userid = ?", (ctx.author.id,))
+        data = await c.fetchall()
+        pages = menus.MenuPages(source=botmenus.CollectionSource(data), clear_reactions_after=True)
+        await pages.start(ctx)
             
 def setup(bot):
     bot.add_cog(playermeta(bot))

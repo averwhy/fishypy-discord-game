@@ -22,7 +22,7 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.Cog.listener()
     async def on_user_update(self, before, after):
         if before.name != after.name:
-            cursor = await self.bot.db.execute("SELECT * FROM f_users WHERE userid = ?",(after.id))
+            cursor = await self.bot.db.execute("SELECT * FROM f_users WHERE userid = ?",(after.id,))
             data = await cursor.fetchone()
             if data is None:
                 #The user doesnt exist, so do not update
@@ -72,6 +72,8 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
             return
         elif isinstance(error, botchecks.IsNotInGuild):
             await ctx.send_in_codeblock(f"error; sorry, you can only run this command in a guild. right now you are DM'ing me!")
+            return
+        elif isinstance(error, botchecks.BlacklistedChannel):
             return
         else:
             self.bot.commandsFailed += 1

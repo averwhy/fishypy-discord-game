@@ -66,6 +66,10 @@ class HelpCommand(commands.HelpCommand):
         subcommands = "".join(_)
         final_msg = new_msg + (f"[{ctx.prefix}{group.name} ({subcommands.removesuffix('/')})][{group.description}]\n< {group.help} >")
         await ctx.send(final_msg)
+    
+    async def send_error_message(self, error):
+        ctx = self.context
+        await ctx.send_in_codeblock(str(error).lower().removesuffix('.'))
         
 class newhelp(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self, bot):

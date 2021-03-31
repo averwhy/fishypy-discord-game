@@ -1,4 +1,5 @@
 # pylint: disable=wrong-import-order, missing-function-docstring, invalid-name, broad-except, too-many-branches, too-many-statements, too-many-locals, 
+from cogs.owner import OWNER_ID
 import platform
 import traceback
 import asyncio
@@ -54,6 +55,38 @@ class FpyBot(commands.Bot):
     async def get_context(self, message, *, cls=FishyContext):
         return await super().get_context(message, cls=cls)
     
+    async def prompt(self, authorid, message: discord.Message, *, timeout=60.0, delete_after=True, author_id=None):
+        """Credit to Rapptz
+        https://github.com/Rapptz/RoboDanny/blob/715a5cf8545b94d61823f62db484be4fac1c95b1/cogs/utils/context.py#L93"""
+        confirm = None
+
+        for emoji in ('\N{WHITE HEAVY CHECK MARK}', '\N{CROSS MARK}'):
+            await message.add_reaction(emoji)
+
+        def check(payload):
+            nonlocal confirm
+            if payload.message_id != message.id or payload.user_id != authorid:
+                return False
+            codepoint = str(payload.emoji)
+            if codepoint == '\N{WHITE HEAVY CHECK MARK}':
+                confirm = True
+                return True
+            elif codepoint == '\N{CROSS MARK}':
+                confirm = False
+                return True
+            return False
+
+        try:
+            await bot.wait_for('raw_reaction_add', check=check, timeout=timeout)
+        except asyncio.TimeoutError:
+            confirm = None
+
+        try:
+            if delete_after:
+                await message.delete()
+        finally:
+            return confirm
+    
     async def usercheck(self, user): # this function checks if the user exists in the DB
         if isinstance(user, (discord.User, discord.Member)):
             user = user.id
@@ -94,6 +127,23 @@ class FpyBot(commands.Bot):
             return data
         return dbc.fish(self, data)
     
+    async def is_verified(self, user):
+        if isinstance(user, int):
+            #looks like an user ID, lets convert
+            userobj = self.get_user(user)
+            if userobj is None:
+                userobj = await self.fetch_user(user)
+            if userobj is None:
+                return None
+        if user is None:
+            return
+        c = await self.db.execute("SELECT * FROM f_verified WHERE userid = ?", (user.id,))
+        data = await c.fetchone()
+        if data is not None:
+            return True
+        else:
+            return False
+    
     async def rodUpgradebar(self, rodlvl):
         return f"{'#' * (decimal := round(rodlvl % 1 * 15))}{'_' * (15 - decimal)}"
     #print(returned_upgradeBar)
@@ -128,6 +178,7 @@ bot.coin_multiplier = 1.0
 bot.seconds_to_react = 5
 bot.fishers = []
 bot.autofishers = []
+bot.channel_blacklist = []
 bot.uses = {}
 bot.rodsbought = 0
 bot.last_backup_message = ""
@@ -138,8 +189,10 @@ async def startup(bot):
     await bot.db.execute("CREATE TABLE IF NOT EXISTS f_bans (userid int, bannedwhen blob, reason text)")
     await bot.db.execute("CREATE TABLE IF NOT EXISTS f_collections (userid int, oid blob)")
     await bot.db.execute("CREATE TABLE IF NOT EXISTS f_rods (level int, name text, cost int)") # Not for users
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_nets (level int, name text, cost int, mins int)") # Also not for users
+    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_nets (level int, name text, cost int, mins double)") # Also not for users
     await bot.db.execute("CREATE TABLE IF NOT EXISTS f_stats (totalfished int, totalcoinsearned int, totalrodsbought int, totalautofished int)")
+    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_blacklist (channelid int)")
+    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_verified (userid int)")
     
     cur = await bot.db.execute('SELECT * FROM f_prefixes')
     dbprefixes = await cur.fetchall()
@@ -148,7 +201,13 @@ async def startup(bot):
 bot.loop.create_task(startup(bot))
 
 ############################################################################################################################################################################################
-    
+
+@bot.check
+async def blacklist_check(ctx: FishyContext):
+    if ctx.channel.id in bot.channel_blacklist and ctx.author.id != OWNER_ID:
+        raise botchecks.BlacklistedChannel()
+    else: return True
+
 @bot.event
 async def on_ready():
     print('-------------------------------------------------------')
