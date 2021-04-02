@@ -22,7 +22,7 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.Cog.listener()
     async def on_user_update(self, before, after):
         if before.name != after.name:
-            cursor = await self.bot.db.execute("SELECT * FROM f_users WHERE userid = ?",(after.id))
+            cursor = await self.bot.db.execute("SELECT * FROM f_users WHERE userid = ?",(after.id,))
             data = await cursor.fetchone()
             if data is None:
                 #The user doesnt exist, so do not update
@@ -37,7 +37,9 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
     async def on_message(self, message):
         ms = (message.content).strip()
         if ms in [f"{self.bot.user.mention}",f"<@!{self.bot.user.id}>",f"<@?{self.bot.user.id}>"]:
-            return await message.channel.send(f"```hi, my prefix is {self.bot.prefixes[message.guild.id]}```")
+            try: prefix = self.bot.prefixes[message.guild.id]
+            except KeyError: prefix = self.bot.defaultprefix
+            return await message.channel.send(f"```hey, my prefix is {prefix}```")
     
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
@@ -72,6 +74,8 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
             return
         elif isinstance(error, botchecks.IsNotInGuild):
             await ctx.send_in_codeblock(f"error; sorry, you can only run this command in a guild. right now you are DM'ing me!")
+            return
+        elif isinstance(error, botchecks.BlacklistedChannel):
             return
         else:
             self.bot.commandsFailed += 1

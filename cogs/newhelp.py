@@ -1,4 +1,4 @@
-from typing import Mapping
+from typing import Mapping, final
 import typing
 import discord
 import platform
@@ -20,11 +20,10 @@ Compete with others for best collection
 #__________COMMANDS__________#
 """
 base_msg_command = f"""```md
-#__________COMMAND_HELP__________#
+#__________COMMAND HELP__________#
 """
 base_msg_group = f"""```md
-Please note: this is a work in progress.
-#__________COMMAND_HELP__________#
+#__________COMMAND HELP__________#
 """
 
 class HelpCommand(commands.HelpCommand):
@@ -54,7 +53,7 @@ class HelpCommand(commands.HelpCommand):
     async def send_command_help(self, command: commands.Command):
         ctx = self.context
         new_msg = base_msg_command
-        new_msg = new_msg + (f"[{ctx.prefix}{command.name}][{command.description}]\n< {command.help} >")
+        new_msg = new_msg + (f"[{ctx.prefix}{command.name}][{command.description}]\n# {command.help}")
         final_msg = new_msg + "\n```"
         await ctx.send(final_msg)
 
@@ -64,8 +63,19 @@ class HelpCommand(commands.HelpCommand):
         new_msg = base_msg_command
         _ = [f"{sc.name}|" for sc in group.commands]
         subcommands = "".join(_)
-        final_msg = new_msg + (f"[{ctx.prefix}{group.name} ({subcommands.removesuffix('/')})][{group.description}]\n< {group.help} >")
+        final_msg = new_msg + (f"[{ctx.prefix}{group.name}][{group.description}]\n# {group.help}\n")
+        for s in group.commands:
+            final_msg += f"[{ctx.prefix}{group.name} {s.name}]({s.help})\n"
+        
+        final_msg += "\n```"
+        
+        if len(final_msg) > 2000:
+            return await ctx.send_in_codeblock(f"unable to send help, message is too big. please annoy my owner to program this in ({ctx.prefix}support)")
         await ctx.send(final_msg)
+    
+    async def send_error_message(self, error):
+        ctx = self.context
+        await ctx.send_in_codeblock(str(error).lower().removesuffix('.'))
         
 class newhelp(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self, bot):
