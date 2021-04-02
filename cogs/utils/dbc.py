@@ -62,7 +62,7 @@ class player:
         if player:
             return False
         #(userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer)
-        await bot.db.execute("INSERT INTO f_users VALUES (?, ?, 0, 1, 0, 'none', 0, 'none', 0, 0)",(user.id, user.name,))
+        await bot.db.execute("INSERT INTO f_users VALUES (?, ?, 0, 1, 0, 'none', 0, 'none', 0, 0, 1)",(user.id, user.name,))
         await bot.db.commit()
         return True
 
