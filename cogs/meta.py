@@ -24,13 +24,13 @@ class meta(commands.Cog):
     @commands.group(invoke_without_command=True, description="changing config for the server (admins only)")
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def config(self, ctx):
-        """currently you can do 2 things with this command:\n1. change server prefix. it only affects the server.\n2. blacklist channels. it will prevent the bot from being used in """
+        """currently you can do 2 things with this command:  1. change server prefix. it only affects the server.  2. blacklist channels. it will prevent the bot from being used in specified channels."""
         return await ctx.send_in_codeblock(f"please specify, {ctx.prefix}config [prefix/blacklist]")
     
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     @config.command(name='prefix',aliases=["pre"],description="changing bot prefix for server(admins only)")
     async def set_prefix(self, ctx, prefix=None):
-        """prefix command. allows you to see current prefix, if no prefix is specified. \nprefix can only be changed by users with the Manage Guild permission. (and the bot owner)"""
+        """prefix command. allows you to see current prefix, if no prefix is specified. prefix can only be changed by users with the Manage Guild permission. (and the bot owner)"""
         if ctx.guild is None:
             return await ctx.send_in_codeblock("prefix cannot be changed in dm's")
         if prefix is None:
@@ -64,7 +64,7 @@ class meta(commands.Cog):
     
     @config.command(invoke_without_command=True)
     async def blacklist(self, ctx, channel = None):
-        """adds or removes a channel from blacklist, depending on if it is blacklisted or not. channels in the blacklist are completely ignored by the bot (no responses, reactions, etc). this could causes issues if called when users are fishing in it."""
+        """adds or removes a channel from blacklist, depending on if it is blacklisted or not. channels in the blacklist are completely ignored by the bot {no responses, reactions, etc}. this could causes issues if called when users are fishing in it."""
         guilds_channels = [c.id for c in ctx.guild.channels]
         guilds_blacklisted_channels = [c.name for c in ctx.guild.channels if c.id in self.bot.channel_blacklist]
         

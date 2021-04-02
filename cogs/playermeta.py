@@ -110,11 +110,13 @@ class playermeta(commands.Cog):
     
     @commands.group(aliases=["rank","lb","leaderboard"], invoke_without_command=True, description="user leaderboards")
     async def top(self, ctx):
-        await ctx.send_in_codeblock(f"please specify: {ctx.prefix}top (rod, coins, collection, caught)")
+        """users with the highest statistics"""
+        await ctx.send_in_codeblock(f"please specify: {ctx.prefix}top ({','.join([c.name for c in ctx.command.commands])})")
     
     @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["rods","r"])
     async def rod(self, ctx):
+        """shows users with the highest rod levels"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
@@ -137,6 +139,7 @@ class playermeta(commands.Cog):
     @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["nets","n"])
     async def net(self, ctx):
+        """shows users with the highest net levels"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
@@ -159,6 +162,7 @@ class playermeta(commands.Cog):
     @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["coins","c"])
     async def coin(self, ctx):
+        """shows users with the most coins"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
@@ -179,6 +183,7 @@ class playermeta(commands.Cog):
     @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["collections","cl"])
     async def collection(self, ctx):
+        """shows users with the most fishes in their collections"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
@@ -208,6 +213,7 @@ class playermeta(commands.Cog):
     @commands.cooldown(1, 10, BucketType.user)
     @top.command(aliases=["totalcaught","tc"])
     async def caught(self, ctx):
+        """shows users with the most caught fish"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
@@ -229,6 +235,7 @@ class playermeta(commands.Cog):
     @commands.cooldown(1, 60, BucketType.user)
     @commands.command(description="view all fish in your collection with an interactive menu")
     async def collection(self, ctx):
+        """allows you to view your collection in an interactive reaction-powered embed"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")

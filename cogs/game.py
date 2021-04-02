@@ -199,6 +199,7 @@ class game(commands.Cog):
     
     @autofish.command()
     async def start(self, ctx):
+        """starts autofishing"""
         player = await self.bot.get_player(ctx.author)
         if player is None: return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         
@@ -212,6 +213,7 @@ class game(commands.Cog):
         
     @autofish.command(aliases=["quit", "cancel", "fuckoff"])
     async def stop(self, ctx):
+        """stops/cancels autofishing. autofishing stats take up 10 seconds to send."""
         player = await self.bot.get_player(ctx.author)
         if player is None: return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         
@@ -224,6 +226,7 @@ class game(commands.Cog):
     
     @autofish.command(aliases=["s"])
     async def settings(self, ctx):
+        """shows notification settings for autofishing"""
         player = await self.bot.get_player(ctx.author)
         if player is None: return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
         l1 = "✓" if player.autofishing_notif == 1 else "x"
@@ -242,6 +245,7 @@ language='md')
 
     @autofish.command(name="set", description="change autofishing notification settings")
     async def _set(self, ctx, level: int = None):
+        """sets your notification level for autofishing, see the settings subcommand for all options"""
         """set your autofish notification level (1-5), see the 'af settings' command for all options"""
         player = await self.bot.get_player(ctx.author)
         if player is None: return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")

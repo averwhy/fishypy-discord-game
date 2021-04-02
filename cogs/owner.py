@@ -42,43 +42,7 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.group(invoke_without_command=True,hidden=True)
     async def dev(self, ctx):
         #bot dev commands
-        await ctx.send_in_codeblock("Invalid subcommand", language='css')
-
-    @dev.command(aliases=["r","reloadall"])
-    async def reload(self, ctx):
-        output = ""
-        amount_reloaded = 0
-        async with ctx.channel.typing():
-            for e in self.bot.initial_extensions:
-                try:
-                    self.bot.reload_extension(e)
-                    amount_reloaded += 1
-                except Exception as e:
-                    e = str(e)
-                    output = output + e + "\n"
-            await asyncio.sleep(1)
-            if output == "":
-                await ctx.send(content=f"`{len(self.bot.initial_extensions)} cogs succesfully reloaded.`") # no output = no error
-            else:
-                await ctx.send(content=f"`{amount_reloaded} cogs were reloaded, except:` ```\n{output}```") # output
-
-    @dev.command(aliases=["load","l"])
-    async def loadall(self, ctx):
-        output = ""
-        amount_loaded = 0
-        async with ctx.channel.typing():
-            for e in self.bot.initial_extensions:
-                try:
-                    self.bot.load_extension(e)
-                    amount_loaded += 1
-                except Exception as e:
-                    e = str(e)
-                    output = output + e + "\n"
-            await asyncio.sleep(1)
-            if output == "":
-                await ctx.send(content=f"`{len(self.bot.initial_extensions)} cogs succesfully loaded.`") # no output = no error
-            else:
-                await ctx.send(content=f"`{amount_loaded} cogs were loaded, except:` ```\n{output}```") # output
+        await ctx.send_in_codeblock("[Invalid subcommand]", language='css')
 
     @dev.command()
     async def status(self, ctx, *, text):
@@ -125,22 +89,17 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
             return await ctx.send_in_codeblock((f"[{e}]"), language='css')
     
     @dev.command(aliases=['cu','c'])
-    async def cleanup(self, ctx, amount=100):
-        wordlist = ["yoinked","yeeted","throwned","chucked","lobbed","propelled","bit the dust","tossed","are now sleeping with the fishes"] # because funny
-        try:
-            def is_me(m):
+    async def cleanup(self, ctx, amount=20):
+        def is_me(m):
                 return m.author == self.bot.user
-
-            deleted = 0
-            async for m in ctx.channel.history(limit=amount):
-                if is_me(m):
-                    await m.delete()
-                    deleted += 1
-                else:
-                    pass
-            return await ctx.send_in_codeblock((f"ok, {deleted}/{amount} messages {random.choice(wordlist)}"))
-        except Exception as e:
-            await ctx.send_in_codeblock(f"hm, didn't work\n[{e}]", language='css')
+        do_bulk = True
+        if not ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+            do_bulk = False
+        await ctx.send(do_bulk)
+        await ctx.channel.purge(limit=amount, check=check, bulk=do_bulk)
+        reactions = ['✅', '<:yesfish:810187479466115102>', '<a:snod:798165766888488991>']
+        selected_reaction = (random.choices(reactions, weights=[0.8, 0.1, 0.1], k=1))[0]
+        return await ctx.message.add_reaction(selected_reaction)
     
     @dev.command(hidden=True,name="stream")
     async def streamingstatus(self, ctx, *, name):

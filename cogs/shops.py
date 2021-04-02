@@ -13,18 +13,18 @@ from discord.ext.commands import CheckFailure, check
 from .utils.dbc import player, fish
 from .utils import botchecks
 
-class shop(commands.Cog):
+class shops(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         
-    @commands.group(invoke_without_command=True, name='shop', description='shows you the prices of upgrades for rods and nets')
-    async def _shop(self, ctx):
+    @commands.group(invoke_without_command=True, description='shows you the prices of upgrades for rods and nets')
+    async def shop(self, ctx):
         """the main shop command, here you can see the prices of rods and nets"""
         await ctx.send_in_codeblock(f"usage: {ctx.prefix}shop [rods, nets]")
 
-    @_shop.command(aliases=["rod","r"])
+    @shop.command(aliases=["rod","r"])
     async def rods(self, ctx):
-        """shows you your current rod, and the upcoming rods you can buy."""
+        """shows you your current rod, and the upcoming rods you can buy"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
@@ -47,9 +47,9 @@ class shop(commands.Cog):
         table = table + f"\n(and more...)({playeruser.coins} coins)"
         await ctx.reply_in_codeblock(table, language='md')
         
-    @_shop.command(aliases=["net","n"])
+    @shop.command(aliases=["net","n"])
     async def nets(self, ctx):
-        """shows you your current net, and the upcoming nets you can buy."""
+        """shows you your current net, and the upcoming nets you can buy"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
@@ -74,12 +74,12 @@ class shop(commands.Cog):
     
     @commands.group(invoke_without_command=True, aliases=["u"], description="buy new rods or nets automatically")
     async def upgrade(self, ctx):
-        """buys something."""
+        """buys something"""
         await ctx.send_in_codeblock(f"please specify {ctx.prefix}upgrade [rod/net]")
         
     @upgrade.command(name='rod')
     async def _rod(self, ctx):
-        """buys the next avaliable rod automatically, if you have enough coins."""
+        """buys the next avaliable rod automatically, if you have enough coins"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
@@ -99,7 +99,7 @@ class shop(commands.Cog):
     
     @upgrade.command(name='net')
     async def _net(self, ctx):
-        """buys the next avaliable net automatically, if you have enough coins."""
+        """buys the next avaliable net automatically, if you have enough coins"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
@@ -119,5 +119,5 @@ class shop(commands.Cog):
         
             
 def setup(bot):
-    bot.add_cog(shop(bot))
+    bot.add_cog(shops(bot))
         

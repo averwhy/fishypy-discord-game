@@ -161,7 +161,7 @@ async def get_prefix(bot, message):
         return ""
     return bot.prefixes.get(message.guild.id, defaultprefix)
 bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions=True, messages=True, members=True, guilds=True))
-initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shop','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
+initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shops','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
 
 #BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168
