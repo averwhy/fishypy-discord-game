@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from discord.ext import commands, tasks
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import CheckFailure, check
+import humanize
 
 from .utils import botchecks, dbc
 
@@ -18,7 +19,7 @@ class game(commands.Cog):
         self.bot = bot
     
     @commands.Cog.listener()   
-    async def on_fish_catch(self, player, fish, coins, autofish: bool):
+    async def on_fish_catch(self, player, fish, coins, autofish: bool = False):
         coins = round(coins,2)
         #first, lets update stats
         await self.bot.db.execute("UPDATE f_stats SET totalfished = (totalfished + 1)")
@@ -30,6 +31,10 @@ class game(commands.Cog):
         await self.bot.db.execute("UPDATE f_users SET totalcaught = (totalcaught + 1) WHERE userid = ?",(player.id,))
         await player.update_collection(fish.oid)
         await player.check_trophy(fish.oid)
+        
+        if autofish:
+            await self.bot.db.execute("UPDATE f_stats SET totalautofished = (totalautofished + 1)")
+        await self.bot.db.commit()
         
     def select_3_reactions(self):
         image_list = {
@@ -57,12 +62,12 @@ class game(commands.Cog):
     
     async def do_autofishing(self, ctx, player):
         playernet = await player.get_net()
+        actual_start = datetime.utcnow()
         time_end = datetime.utcnow() + timedelta(minutes=playernet.minutes)
         caught = 0
         coins = 0
     
         while ctx.author.id in self.bot.autofishers and datetime.utcnow() < time_end:
-            print("started")
             fish = await ctx.random_fish(player.rod)
             splitname = fish.name.split()
             caught_before = "" if (await player.check_collection(fish.oid)) else " (NEW)"
@@ -94,9 +99,13 @@ class game(commands.Cog):
                 pass
             self.bot.dispatch("fish_catch", player, fish, (coins_earned - (coins_earned * 0.10)), autofish=True)
             await asyncio.sleep(10)
-           
-        self.bot.autofishers.remove(player.id)
-        await player.user.send(f"```md\n#____________AUTOFISHING FINISHED____________#\nfishing time: {playernet.minutes} minutes\nfish caught: {caught}\ncoins eared: {coins}\n```")
+
+        actual_fishing_time = f"(actual time {humanize.precisedelta(actual_start)})" if player.id not in self.bot.autofishers else ""
+        stopped_or_cancelled = "FINISHED" if player.id in self.bot.autofishers else "CANCELLED"
+        try: self.bot.autofishers.remove(player.id)
+        except: pass
+        
+        await player.user.send(f"```md\n#____________AUTOFISHING {stopped_or_cancelled}____________#\nfishing time: {playernet.minutes} minutes {actual_fishing_time}\nfish caught: {caught}\ncoins eared: {coins}\n```")
     
     async def do_fish(self, ctx, player):
         msg = None

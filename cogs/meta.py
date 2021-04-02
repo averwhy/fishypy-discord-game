@@ -111,37 +111,31 @@ class meta(commands.Cog):
         
     
     @commands.cooldown(1,15,BucketType.user)
-    @commands.command(description="info and stats about bot", aliases=['ping','information','info'])
+    @commands.command(description="info and stats about bot", aliases=['information','info'])
     async def stats(self,ctx): # info thing
         """shows bot statistics, such as versions, ping (connection to discord), total fish caught, users fishing, etc"""
-        # get API ping
-        start = time.perf_counter()
-        message = await ctx.send_in_codeblock("Getting info...", language='css')
-        end = time.perf_counter()
         #now lets get uptime and fancy it
         delta_uptime = datetime.utcnow() - self.bot.launch_time
         hours, remainder = divmod(int(delta_uptime.total_seconds()), 3600)
         minutes, seconds = divmod(remainder, 60)
         days, hours = divmod(hours, 24)
-        #now for database ping, which also doubles as the amount of fish
-        start2 = time.perf_counter()
         c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes")
         fishtotal = (await c.fetchone())[0]
+        c = await self.bot.db.execute("SELECT COUNT(*) FROM f_rods")
+        rodtotal = (await c.fetchone())[0]
+        c = await self.bot.db.execute("SELECT COUNT(*) FROM f_nets")
+        nettotal = (await c.fetchone())[0]
         await self.bot.db.commit()
         c = await self.bot.db.execute("SELECT * FROM f_stats")
         fstats = await c.fetchone()
         totalfished = fstats[0]
         totalcoinsearned = fstats[1]
         totalrodsbought = fstats[2]
-        end2 = time.perf_counter()
-        
-        # duration = round(((end - start) * 1000),1)
-        # db_duration = round(((end2 - start2) * 1000),1)
-        # ws = round((self.bot.latency * 1000),2)
-        msg = f"""```prolog
+        msg = f"""```css
 Python, Discordpy Version: {platform.python_version()}, {discord.__version__}
 Fishes: {fishtotal}
-Rods: 539
+Rods: {rodtotal}
+Nets: {nettotal}
 Total Rods Bought: {totalrodsbought}
 Fish Caught (Since Start): {self.bot.fishCaughtinsession}
 Fish Caught (Total): {totalfished}
@@ -149,9 +143,32 @@ Total Coins Earned: {totalcoinsearned}
 Users fishing: {len(self.bot.fishers)}
 Users autofishing: {len(self.bot.autofishers)}
 Uptime: {days}d, {hours}h, {minutes}m, {seconds}s```
-        """
-        await message.edit(content=msg)
+        """.lower()
+        await ctx.send(content=msg)
         
+    @commands.cooldown(1,10,BucketType.user)
+    @commands.command(description="shows bots latency to discord", hidden=True)
+    async def ping(self, ctx): # info thing
+        # get API ping
+        start = time.perf_counter()
+        message = await ctx.send_in_codeblock("Getting info...", language='css')
+        end = time.perf_counter()
+        #now for database ping, which also doubles as the amount of fish
+        start2 = time.perf_counter()
+        await self.bot.db.execute("SELECT * FROM f_rods")
+        await self.bot.db.commit()
+        end2 = time.perf_counter()
+        
+        duration = round(((end - start) * 1000),1)
+        db_duration = round(((end2 - start2) * 1000),1)
+        ws = round((self.bot.latency * 1000),2)
+        msg = f"""```css
+Websocket Ping: {ws}ms
+API Ping: {duration}ms
+Database Ping: {db_duration}ms```
+        """.lower()
+        await message.edit(content=msg)
+    
     @commands.cooldown(1,10,BucketType.channel)
     @commands.command(hidden=True)
     async def about(self,ctx):
