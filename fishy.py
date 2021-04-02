@@ -166,7 +166,7 @@ initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shops',
 #BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168
 bot.launch_time = datetime.utcnow()
-bot.version = '1.1.2'
+bot.version = '2.0'
 bot.socket_sent_counter = 0
 bot.socket_recieved_counter = 0
 bot.fishCaughtinsession = 0
