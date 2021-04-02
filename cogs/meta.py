@@ -68,7 +68,7 @@ class meta(commands.Cog):
         guilds_channels = [c.id for c in ctx.guild.channels]
         guilds_blacklisted_channels = [c.name for c in ctx.guild.channels if c.id in self.bot.channel_blacklist]
         
-        if channel.strip().lower() != "all":
+        if channel != "all":
             channel = await TextChannelConverter().convert(ctx, channel)
         
         if not channel: 
@@ -76,7 +76,7 @@ class meta(commands.Cog):
                 f"channels in this server: {len(ctx.guild.channels)}\nblacklisted channels: {len(guilds_blacklisted_channels)} ({', '.join(guilds_blacklisted_channels)})"
                 )
         
-        elif channel.strip().lower() == "all":
+        elif channel == "all":
             check_channels = [c.id for c in ctx.guild.channels if c.id in self.bot.channel_blacklist]
             if len(check_channels) == (len(ctx.guild.channels) - 1): # all channels in blacklist for some reason
                 for c in check_channels:
