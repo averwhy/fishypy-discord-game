@@ -41,7 +41,7 @@ class fish:
     
     def coins(self, rod_level):
         math = ((self.rarity * (self.original_length * 2)) * (1 + (rod_level * 0.01))) * 0.4
-        return round(math, 1)
+        return round(math, 2)
 
 class player:
     def __init__(self, bot, data, user):
