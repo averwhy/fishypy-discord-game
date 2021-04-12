@@ -40,7 +40,7 @@ class fish:
             return ["Common", 0x40ff00]
     
     def coins(self, rod_level):
-        math = ((self.rarity * (self.original_length * 2)) * (1 + (rod_level * 0.01)))
+        math = ((self.rarity * (self.original_length * 2)) * (1 + (rod_level * 0.01))) * 0.4
         return round(math, 1)
 
 class player:
