@@ -1,18 +1,13 @@
-# pylint: disable=wrong-import-order, missing-function-docstring, invalid-name, broad-except, too-many-branches, too-many-statements, too-many-locals, 
 from cogs.owner import OWNER_ID
-import platform
 import traceback
 import asyncio
-import time
 import os, sys
 import aiosqlite
 import discord
 import math, random
-import typing
 from datetime import datetime
 from discord.ext import commands
-from discord.ext.commands.cooldowns import BucketType
-from discord.ext.commands import CheckFailure, check
+import humanize
 
 from cogs.utils import dbc, botchecks
 #BOT##########################################################################################################
@@ -166,7 +161,7 @@ initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shops',
 #BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168
 bot.launch_time = datetime.utcnow()
-bot.version = '2.0'
+bot.version = '2.0.1'
 bot.socket_sent_counter = 0
 bot.socket_recieved_counter = 0
 bot.fishCaughtinsession = 0
@@ -201,6 +196,45 @@ async def startup(bot):
 bot.loop.create_task(startup(bot))
 
 ############################################################################################################################################################################################
+
+@bot.event
+async def on_command_error(ctx, error): # this is an event that runs when there is an error
+    if isinstance(error, discord.ext.commands.errors.CommandNotFound):
+        return
+    elif isinstance(error, discord.ext.commands.errors.CommandOnCooldown): 
+        emote = str(discord.PartialEmoji(name="ppOverheat", id=772189476704616498, animated=True))
+        s = round(error.retry_after,2)
+        s = humanize.naturaldelta(s)
+        msgtodelete = await ctx.send_in_codeblock(f"error; cooldown for {s}")
+        await asyncio.sleep(bot.secondstoReact)
+        await msgtodelete.delete()
+        return
+    elif isinstance(error, discord.ext.commands.errors.NotOwner):
+        msgtodelete = await ctx.send_in_codeblock("error; missing permissions")
+        await asyncio.sleep(15)
+        await msgtodelete.delete()
+    elif isinstance(error, botchecks.BanCheckError):
+        await ctx.send_in_codeblock(f"error; you're banned! please join the Fishy.py support server to appeal ({ctx.prefix}support)")
+        return
+    elif isinstance(error, botchecks.IsNotInGuild):
+        await ctx.send_in_codeblock(f"error; sorry, you can only run this command in a guild. right now you are DM'ing me!")
+        return
+    elif isinstance(error, botchecks.BlacklistedChannel):
+        return
+    elif isinstance(error, discord.Forbidden):
+        try:
+            await ctx.send_in_codeblock("error; i'm missing some permissions. please make sure i have embed permissions, manage messages, and use external emojis.")
+        except:
+            # RIP
+            print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+            #await ctx.send_in_codeblock(f"Internal Error\n- {error}",language='diff')
+    else:
+        bot.commandsFailed += 1
+        # All other Errors not returned come here. And we can just print the default TraceBack.
+        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+        await ctx.send_in_codeblock(f"Internal Error\n- {error}",language='diff')
 
 @bot.check
 async def blacklist_check(ctx: FishyContext):

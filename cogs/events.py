@@ -54,37 +54,6 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
         except KeyError: self.bot.uses[ctx.author.id] = 1
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error): # this is an event that runs when there is an error
-        if isinstance(error, discord.ext.commands.errors.CommandNotFound):   
-            return
-        elif isinstance(error, discord.ext.commands.errors.CommandOnCooldown): 
-            emote = str(discord.PartialEmoji(name="ppOverheat", id=772189476704616498, animated=True))
-            s = round(error.retry_after,2)
-            s = humanize.naturaldelta(s)
-            msgtodelete = await ctx.send_in_codeblock(f"error; cooldown for {s}")
-            await asyncio.sleep(self.bot.secondstoReact)
-            await msgtodelete.delete()
-            return
-        elif isinstance(error, discord.ext.commands.errors.NotOwner):
-            msgtodelete = await ctx.send_in_codeblock("error; missing permissions")
-            await asyncio.sleep(10)
-            await msgtodelete.delete()
-        elif isinstance(error, botchecks.BanCheckError):
-            await ctx.send_in_codeblock(f"error; you're banned! please join the Fishy.py support server to appeal ({ctx.prefix}support)")
-            return
-        elif isinstance(error, botchecks.IsNotInGuild):
-            await ctx.send_in_codeblock(f"error; sorry, you can only run this command in a guild. right now you are DM'ing me!")
-            return
-        elif isinstance(error, botchecks.BlacklistedChannel):
-            return
-        else:
-            self.bot.commandsFailed += 1
-            # All other Errors not returned come here. And we can just print the default TraceBack.
-            print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-            await ctx.send_in_codeblock(f"Internal Error\n- {error}",language='diff')
-
-    @commands.Cog.listener()
     async def on_guild_join(self, guild):
         logchannel = self.bot.get_channel(761683999772377128)
         if logchannel is None:
@@ -128,25 +97,25 @@ Emoji limit:     {humanize.naturalsize(guild.emoji_limit)}```
                 """
         await logchannel.send(msg)
         
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        if member.guild.id == SUPPORT_SERVER_ID:
-            hook_link = os.getenv('FISHY_JOIN_HOOK')
-            async with aiohttp.ClientSession() as session:
-                joinhook = discord.Webhook.from_url(url=hook_link, adapter=discord.AsyncWebhookAdapter(session))
-                await joinhook.send(f"{str(member)} joined!")
-        else:
-            pass
+    # @commands.Cog.listener()
+    # async def on_member_join(self, member):
+    #     if member.guild.id == SUPPORT_SERVER_ID:
+    #         hook_link = os.getenv('FISHY_JOIN_HOOK')
+    #         async with aiohttp.ClientSession() as session:
+    #             joinhook = discord.Webhook.from_url(url=hook_link, adapter=discord.AsyncWebhookAdapter(session))
+    #             await joinhook.send(f"{str(member)} joined!")
+    #     else:
+    #         pass
     
-    @commands.Cog.listener()
-    async def on_member_remove(self, member):
-        if member.guild.id == SUPPORT_SERVER_ID:  
-            hook_link = os.getenv('FISHY_LEAVE_HOOK')
-            async with aiohttp.ClientSession() as session:
-                joinhook = discord.Webhook.from_url(url=hook_link, adapter=discord.AsyncWebhookAdapter(session))
-                await joinhook.send(f"{str(member)} left.")
-        else:
-            pass
+    # @commands.Cog.listener()
+    # async def on_member_remove(self, member):
+    #     if member.guild.id == SUPPORT_SERVER_ID:  
+    #         hook_link = os.getenv('FISHY_LEAVE_HOOK')
+    #         async with aiohttp.ClientSession() as session:
+    #             joinhook = discord.Webhook.from_url(url=hook_link, adapter=discord.AsyncWebhookAdapter(session))
+    #             await joinhook.send(f"{str(member)} left.")
+    #     else:
+    #         pass
         
         
 def setup(bot):

@@ -207,8 +207,14 @@ class game(commands.Cog):
         if is_fishing:
             return await ctx.send(f"you are already autofishing, check [ {ctx.prefix}autofish ] for more info", language='ini')
         
+        
+        try:
+            await ctx.message.add_reaction("<a:loading:782995523404562432>")
+            asyncio.create_task(self.do_autofishing(ctx, player))
+        except Exception as e:
+            return await ctx.send_in_codeblock(f"it seems something went wrong. please join the support server ({ctx.prefix}support)\n{e}")
         self.bot.autofishers.append(ctx.author.id)
-        asyncio.create_task(self.do_autofishing(ctx, player))
+        await ctx.message.add_reaction("✅")
         return await ctx.send_in_codeblock("autofishing started, please allow dm's from bot")
         
     @autofish.command(aliases=["quit", "cancel", "fuckoff"])
