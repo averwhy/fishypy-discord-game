@@ -72,10 +72,8 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
         self.bot.fishers.clear()
         await self.bot.db.commit()
         await self.bot.db.close()
-        try:
-            await self.bot.logout()
-        except RuntimeError:
-            pass
+        await self.bot.change_presence(status=discord.Status.offline)
+        await self.bot.logout()
         
     @dev.command()
     async def sql(self, ctx, *, statement):
