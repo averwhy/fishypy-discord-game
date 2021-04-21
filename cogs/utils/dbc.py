@@ -65,10 +65,9 @@ class player:
       
     @staticmethod
     async def create(bot, user: discord.User):
-        player = await bot.usercheck(user.id)
-        if player:
+        existingplayer = await bot.usercheck(user.id)
+        if existingplayer:
             return False
-        #(userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer)
         await bot.db.execute("INSERT INTO f_users VALUES (?, ?, 0, 1, 0, 'none', 0, 'none', 0, 0, 1, 1)",(user.id, user.name,))
         await bot.db.commit()
         return True
