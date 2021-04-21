@@ -97,9 +97,10 @@ class game(commands.Cog):
         actual_fishing_time = f"(actual time {humanize.precisedelta(actual_start)})" if player.id not in self.bot.autofishers else ""
         stopped_or_cancelled = "FINISHED" if player.id in self.bot.autofishers else "CANCELLED"
         try: self.bot.autofishers.remove(player.id)
-        except: pass
+        except KeyError: pass
         
         await player.user.send(f"```md\n#____________AUTOFISHING {stopped_or_cancelled}____________#\nfishing time: {playernet.minutes} minutes {actual_fishing_time}\nfish caught: {caught}\ncoins eared: {coins}\n```")
+        return
     
     async def do_fish(self, ctx, player):
         msg = None
@@ -203,8 +204,7 @@ class game(commands.Cog):
         
         
         try:
-            await ctx.message.add_reaction("<a:loading:782995523404562432>")
-            asyncio.create_task(self.do_autofishing(ctx, player))
+            asyncio.run(self.do_autofishing(ctx, player))
         except Exception as e:
             return await ctx.send_in_codeblock(f"it seems something went wrong. please join the support server ({ctx.prefix}support)\n{e}")
         self.bot.autofishers.append(ctx.author.id)
