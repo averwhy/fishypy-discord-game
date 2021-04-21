@@ -174,8 +174,8 @@ class playermeta(commands.Cog):
         await ctx.send_in_codeblock(table, language='css')
     
     @commands.cooldown(1, 10, BucketType.user)
-    @top.command(aliases=["collections","cl"])
-    async def collection(self, ctx):
+    @top.command(name='collection', aliases=["collections","cl"])
+    async def _collection(self, ctx):
         """shows users with the most fishes in their collections"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
