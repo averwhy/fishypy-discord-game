@@ -1,17 +1,7 @@
 from typing import Mapping, final
 import typing
-import discord
-import platform
-import time
-import random
-import asyncio
-import re, os
-from datetime import datetime
-from discord.ext import commands, menus
-from discord.ext.commands.cooldowns import BucketType
-from discord.ext.commands import CheckFailure, check
+from discord.ext import commands
 from discord.ext.commands import Group
-import inspect
 OWNER_ID = 267410788996743168
 
 base_msg = f"""```md

@@ -1,15 +1,8 @@
 # pylint: disable=wrong-import-order, missing-function-docstring, invalid-name, broad-except, too-many-branches, too-many-statements, too-many-locals, 
-import platform
-import traceback
-import asyncio
-import time, random
-import os, sys
-import aiosqlite
+import random
 import discord
-from datetime import datetime
 from discord.ext import commands, menus
 from discord.ext.commands.cooldowns import BucketType
-from discord.ext.commands import CheckFailure, check
 from .utils import botchecks, botmenus
 from .utils import dbc
 OWNER_ID = 267410788996743168
@@ -181,8 +174,8 @@ class playermeta(commands.Cog):
         await ctx.send_in_codeblock(table, language='css')
     
     @commands.cooldown(1, 10, BucketType.user)
-    @top.command(aliases=["collections","cl"])
-    async def collection(self, ctx):
+    @top.command(name='collection', aliases=["collections","cl"])
+    async def _collection(self, ctx):
         """shows users with the most fishes in their collections"""
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:

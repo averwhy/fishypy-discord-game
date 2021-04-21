@@ -1,16 +1,10 @@
 import discord
-import aiohttp
 import asyncio
-import time
-import random, math
-import json
-import re, os, sys
-import aiosqlite
+import random
+import re, sys
 import traceback
-import jishaku
 from discord.ext import commands
-from discord.ext.commands.cooldowns import BucketType
-from discord.ext.commands import CheckFailure, check
+from discord.ext.commands import CheckFailure
 wordlist = ["yoinked","yeeted","throwned","chucked","lobbed","propelled","bit the dust","tossed","is now sleeping with the fishes","launched"] # because funny
 FPY_CONTRIBUTOR_ROLE = 758428311038066718
 FPY_MOD_ROLE = 758408309383757894

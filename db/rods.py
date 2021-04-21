@@ -1,4 +1,4 @@
-import sqlite3, os, random
+import sqlite3, random
 conn = sqlite3.connect('fpy.db')
 rods1 = ["Balsa Wood","Basswood","Oak","Hemlock","Poplar","Hickory","Chestnut","Spruce","Larch","Alder","Juniper","Western Larch","Sycamore","Douglas Fir","Pine","Maple","Box Elder","Willow","Beech","Sycamore","Mahogany","Cedar","Birch","Cherry","Walnut","Makore","Oak","Bamboo","Rosewood","Ash","Cypress","Mesquite"]
 rods2 = ["Balsa Wood","Basswood","Oak","Hemlock","Poplar","Hickory","Chestnut","Spruce","Larch","Alder","Juniper","Western Larch","Sycamore","Douglas Fir","Pine","Maple","Box Elder","Willow","Beech","Sycamore","Mahogany","Cedar","Birch","Cherry","Walnut","Makore","Oak","Bamboo","Rosewood","Ash","Cypress","Mesquite","Graphite","Carbon Fiber","Fiberglass"]

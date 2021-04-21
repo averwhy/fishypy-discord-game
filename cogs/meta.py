@@ -4,9 +4,7 @@ import time
 from datetime import datetime
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
-from discord.ext.commands import CheckFailure, check
 from discord.ext.commands import TextChannelConverter
-import aiosqlite
 OWNER_ID = 267410788996743168
 
 class meta(commands.Cog):

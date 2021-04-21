@@ -1,13 +1,4 @@
-import aiosqlite
-import platform
-import traceback
-import asyncio
-import time
-import os, sys
-import discord
-from discord.ext import commands
-from discord.ext.commands.cooldowns import BucketType
-from discord.ext.commands import CheckFailure, check
+from discord.ext.commands import CheckFailure
 
 class BlacklistedChannel(CheckFailure):
     pass

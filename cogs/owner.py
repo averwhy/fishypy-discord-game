@@ -1,13 +1,8 @@
 import discord
-import platform
-import time
 from discord.ext import commands, tasks
-from discord.ext.commands.cooldowns import BucketType
-from discord.ext.commands import CheckFailure, check
-import asyncio
+from discord.ext.commands import check
 import aiosqlite
 import random
-import humanize
 from discord.ext import menus
 from datetime import datetime
 from .utils import botmenus

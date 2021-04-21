@@ -1,15 +1,9 @@
-import platform
-import traceback
 import asyncio
-import time, math
-import os, sys, random
+import random
 from typing import Any
-import aiosqlite
 import discord
 from datetime import datetime, timedelta
-from discord.ext import commands, tasks
-from discord.ext.commands.cooldowns import BucketType
-from discord.ext.commands import CheckFailure, check
+from discord.ext import commands
 import humanize
 
 from .utils import botchecks, dbc
