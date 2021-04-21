@@ -200,7 +200,7 @@ class game(commands.Cog):
         
         is_fishing = ctx.author.id in self.bot.autofishers
         if is_fishing:
-            return await ctx.send(f"you are already autofishing, check [ {ctx.prefix}autofish ] for more info", language='ini')
+            return await ctx.send_in_codeblock(f"you are already autofishing, check [ {ctx.prefix}autofish ] for more info", language='ini')
         
         
         try:
