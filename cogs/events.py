@@ -1,17 +1,5 @@
 # pylint: disable=wrong-import-order, missing-function-docstring, invalid-name, broad-except, too-many-branches, too-many-statements, too-many-locals, 
-import platform
-import traceback
-import asyncio
-import time
-import os, sys
-import aiosqlite
-import aiohttp
-import discord
-from datetime import datetime
 from discord.ext import commands
-from discord.ext.commands.cooldowns import BucketType
-from discord.ext.commands import CheckFailure, check
-from .utils import botchecks
 import humanize
 SUPPORT_SERVER_ID = 734581170452430888
 

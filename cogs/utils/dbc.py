@@ -1,10 +1,7 @@
-import aiosqlite
-import math, random
 import typing
 import discord
 from cogs.utils.botchecks import FishNotFound
 from datetime import datetime
-import enum
 
 #Rarities
 #if the rarity is above the number in the variable, then it is that rarity

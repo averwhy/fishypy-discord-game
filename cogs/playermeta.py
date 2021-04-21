@@ -1,15 +1,8 @@
 # pylint: disable=wrong-import-order, missing-function-docstring, invalid-name, broad-except, too-many-branches, too-many-statements, too-many-locals, 
-import platform
-import traceback
-import asyncio
-import time, random
-import os, sys
-import aiosqlite
+import random
 import discord
-from datetime import datetime
 from discord.ext import commands, menus
 from discord.ext.commands.cooldowns import BucketType
-from discord.ext.commands import CheckFailure, check
 from .utils import botchecks, botmenus
 from .utils import dbc
 OWNER_ID = 267410788996743168

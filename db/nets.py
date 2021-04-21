@@ -1,4 +1,4 @@
-import sqlite3, os, random
+import sqlite3, random
 conn = sqlite3.connect('fpy.db')
 
 nets1 = ["Flax", "Cotton","Wool","Silk","Nylon"]

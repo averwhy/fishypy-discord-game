@@ -2,18 +2,11 @@ import contextlib
 import jishaku.paginators
 import jishaku.exception_handling
 import discord
-import re, sys
-import os, psutil
+import re
 from typing import Union
 from collections import namedtuple
-from jishaku.features.baseclass import Feature
 import jishaku
-import humanize
-from discord.ext import commands
-from jishaku.flags import JISHAKU_HIDE
 from jishaku.meta import __version__
-from jishaku.modules import package_version
-from jishaku.paginators import PaginatorInterface
 
 # class CustomDebugCog(*OPTIONAL_FEATURES, *STANDARD_FEATURES):
 #     @Feature.Command(name="jishaku", aliases=["jsk"], invoke_without_command=True, ignore_extra=False)

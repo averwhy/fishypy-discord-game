@@ -1,4 +1,4 @@
-import sqlite3, os
+import sqlite3
 if True:
     conn = sqlite3.connect('fpy.db')
     c = conn.cursor()
