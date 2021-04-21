@@ -202,11 +202,7 @@ class game(commands.Cog):
         if is_fishing:
             return await ctx.send_in_codeblock(f"you are already autofishing, check [ {ctx.prefix}autofish ] for more info", language='ini')
         
-        
-        try:
-            await self.do_autofishing(ctx, player)
-        except Exception as e:
-            return await ctx.send_in_codeblock(f"it seems something went wrong. please join the support server ({ctx.prefix}support)\n{e}")
+        await self.do_autofishing(ctx, player)
         self.bot.autofishers.append(ctx.author.id)
         await ctx.message.add_reaction("✅")
         return await ctx.send_in_codeblock("autofishing started, please allow dm's from bot")
