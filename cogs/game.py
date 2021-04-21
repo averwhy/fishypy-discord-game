@@ -204,7 +204,7 @@ class game(commands.Cog):
         
         
         try:
-            asyncio.run(self.do_autofishing(ctx, player))
+            await self.do_autofishing(ctx, player)
         except Exception as e:
             return await ctx.send_in_codeblock(f"it seems something went wrong. please join the support server ({ctx.prefix}support)\n{e}")
         self.bot.autofishers.append(ctx.author.id)
