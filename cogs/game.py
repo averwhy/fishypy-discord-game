@@ -204,6 +204,7 @@ class game(commands.Cog):
         
         await ctx.message.add_reaction("✅")
         await ctx.send_in_codeblock("autofishing started, please allow dm's from bot")
+        self.bot.autofishers.append(ctx.author.id)
         return await self.do_autofishing(ctx, player)
         
     @autofish.command(aliases=["quit", "cancel", "fuckoff"])
