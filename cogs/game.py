@@ -97,7 +97,7 @@ class game(commands.Cog):
         actual_fishing_time = f"(actual time {humanize.precisedelta(actual_start)})" if player.id not in self.bot.autofishers else ""
         stopped_or_cancelled = "FINISHED" if player.id in self.bot.autofishers else "CANCELLED"
         try: self.bot.autofishers.remove(player.id)
-        except KeyError: pass
+        except ValueError: pass
         
         await player.user.send(f"```md\n#____________AUTOFISHING {stopped_or_cancelled}____________#\nfishing time: {playernet.minutes} minutes {actual_fishing_time}\nfish caught: {caught}\ncoins eared: {coins}\n```")
         return
@@ -217,7 +217,8 @@ class game(commands.Cog):
         if not is_fishing:
             return await ctx.send_in_codeblock(f"you can't stop autofishing if you aren't autofishing in the first place")
         
-        self.bot.autofishers.remove(ctx.author.id)
+        try: self.bot.autofishers.remove(ctx.author.id)
+        except ValueError: pass
         return await ctx.send_in_codeblock("autofishing stopped, check your dm's for more information")
     
     @autofish.command(aliases=["s"])
