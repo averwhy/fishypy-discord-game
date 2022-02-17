@@ -260,4 +260,4 @@ for cog in initial_extensions:
         print(f"Failed to load {cog}, error:\n", file=sys.stderr)
         traceback.print_exc()
 asyncio.set_event_loop(asyncio.SelectorEventLoop())
-bot.run(TOKEN, bot = True, reconnect = True)
+bot.run(TOKEN)

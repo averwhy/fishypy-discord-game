@@ -236,6 +236,25 @@ class playermeta(commands.Cog):
         data = await c.fetchall()
         pages = menus.MenuPages(source=botmenus.CollectionSource(data), clear_reactions_after=True)
         await pages.start(ctx)
+
+    ## WIP ##
+    # @commands.cooldown(1, 10, BucketType.user)
+    # @commands.command(name="rod", description="changes your rod level")
+    # async def _rod(self, ctx, new_rod_lvl: int):
+    #     """changes your rod to any level that you've previously bought."""
+    #     playeruser = await self.bot.get_player(ctx.author)
+    #     if playeruser is None:
+    #         return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
+    #     playerrod = await playeruser.get_rod()
+    #     maxlevel = playerrod.level
+    #     if new_rod_lvl > maxlevel:
+    #         return await ctx.send_in_codeblock(f"sorry, you can't set your rod level above {maxlevel} ({playerrod.name})")
+        
+    #     await self.bot.db.execute("UPDATE f_users SET rodlevel = ? WHERE userid = ?",(new_rod_lvl, ctx.author.id,))
+    #     await self.bot.db.commit()
+    #     return await ctx.send_in_codeblock(f"done! your rod is now the {playerrod.name} ({playeruser.rod_level})")
+
+        
             
 def setup(bot):
     bot.add_cog(playermeta(bot))

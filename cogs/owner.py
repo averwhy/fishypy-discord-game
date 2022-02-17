@@ -68,7 +68,7 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
         await self.bot.db.commit()
         await self.bot.db.close()
         await self.bot.change_presence(status=discord.Status.offline)
-        await self.bot.logout()
+        await self.bot.close()
         
     @dev.command()
     async def sql(self, ctx, *, statement):

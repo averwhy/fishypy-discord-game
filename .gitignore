@@ -3,3 +3,7 @@ node_modules
 .gitignore
 __pycache__/
 .TOKEN
+TOKEN.txt
+*.db
+*.out
+.vscode/settings.json

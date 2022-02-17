@@ -1,8 +1,10 @@
 # Fishy.py - Bot for Discord #
-[![Discord Chat](https://img.shields.io/discord/308323056592486420.svg)](https://discord.gg/hsqevex)
+![Discord](https://img.shields.io/discord/734581170452430888)
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
-[![Issues](https://img.shields.io/github/issues-raw/tterb/PlayMusic.svg?maxAge=25000)](https://github.com/averwhy/fishypy-discord-game/issues) 
-[![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
+![GitHub last commit](https://img.shields.io/github/last-commit/averwhy/fishypy-discord-game)
+![GitHub issues](https://img.shields.io/github/issues/averwhy/fishypy-discord-game)
+[![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/averwhy/fishypy-discord-game/compare)
+![Maintenance](https://img.shields.io/maintenance/yes/2022)
 [![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://opensource.org/)
 ## Info ##
 This fork of Fishy discord bot has been rewritten in discord.py, and uses SQLite as its database.
@@ -12,7 +14,8 @@ Fishy.py is a fishing style game where you compete with other users or even guil
 # Add the bot
 https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=0scope=bot
 
-## Top.gg 
+## Top.gg
+Help support fishy.py by voting for it here!
 https://top.gg/bot/708428058822180874
 
 
