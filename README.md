@@ -3,6 +3,7 @@
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
 ![GitHub last commit](https://img.shields.io/github/last-commit/averwhy/fishypy-discord-game)
 ![GitHub issues](https://img.shields.io/github/issues/averwhy/fishypy-discord-game)
+[![DeepSource](https://deepsource.io/gh/averwhy/fishypy-discord-game.svg/?label=active+issues&show_trend=true&token=BbhegRz6PPxXwuxHIC7bo-oF)](https://deepsource.io/gh/averwhy/fishypy-discord-game/?ref=repository-badge)
 [![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/averwhy/fishypy-discord-game/compare)
 ![Maintenance](https://img.shields.io/maintenance/yes/2022)
 [![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://opensource.org/)

@@ -175,7 +175,7 @@ bot.uses = {}
 bot.rodsbought = 0
 bot.last_backup_message = ""
 async def startup(bot):
-    bot.db = await aiosqlite.connect('fpy2.db')
+    bot.db = await aiosqlite.connect('fpy.db')
     await bot.db.execute('CREATE TABLE IF NOT EXISTS f_prefixes (guildid int, prefix text)')
     await bot.db.execute('CREATE TABLE IF NOT EXISTS f_users (userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer, totalcaught int, autofishingnotif int, netlevel int)')
     await bot.db.execute("CREATE TABLE IF NOT EXISTS f_bans (userid int, bannedwhen blob, reason text)")
