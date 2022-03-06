@@ -224,7 +224,7 @@ async def on_command_error(ctx, error): # this is an event that runs when there 
     elif isinstance(error, discord.Forbidden):
         try:
             await ctx.send_in_codeblock("error; i'm missing some permissions. please make sure i have embed permissions, manage messages, and use external emojis.")
-        except:
+        except Exception:
             # RIP
             print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
             traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)

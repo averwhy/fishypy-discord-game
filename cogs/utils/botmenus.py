@@ -1,7 +1,6 @@
 from cogs.utils import dbc
 from discord.ext import menus
 import discord
-from cogs.utils import dbc
 
 class SQLSource(menus.ListPageSource):
     def __init__(self, data):

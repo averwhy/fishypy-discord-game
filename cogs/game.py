@@ -145,7 +145,7 @@ class game(commands.Cog):
         await fishmsg.add_reaction('🚫')
         try:
             self.bot.fishers.remove(ctx.author.id)
-        except: pass
+        except Exception: pass
         return False
         
     async def start_fishing(self, ctx, fishmsg):

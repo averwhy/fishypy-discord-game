@@ -58,7 +58,7 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
     async def nickname(self, ctx, *, text):
         try:
             await ctx.guild.me.edit(nick=text, reason=f"My developer {ctx.author} requested this change")
-        except:
+        except Exception:
             return await ctx.send_in_codeblock("Done", language='css')
 
     @dev.command(aliases=['logout','fuckoff','close','s'])

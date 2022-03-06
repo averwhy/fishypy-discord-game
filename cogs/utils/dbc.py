@@ -50,11 +50,11 @@ class player:
         self.coins = float(data[4])
         self.as_of = datetime.utcnow() # shows how up to date the object is
         try: self.trophy_oid = str(data[5])
-        except: self.trophy_oid = None
+        except Exception: self.trophy_oid = None
         try: self.trophy_rod_level = int(data[6])
-        except: self.trophy_rod_level = None
+        except Exception: self.trophy_rod_level = None
         try: self.review_message_id = int(data[8])
-        except: self.review_message_id = None
+        except Exception: self.review_message_id = None
         self.hex_color = str(data[7])
         self.total_caught = int(data[9])
         if not isinstance(user, (discord.User, discord.Member)):
@@ -99,11 +99,11 @@ class player:
         self.coins = float(data[4])
         self.as_of = datetime.utcnow() # shows how up to date the object is
         try: self.trophy_oid = str(data[5])
-        except: self.trophy_oid = None
+        except Exception: self.trophy_oid = None
         try: self.trophy_rod_level = int(data[6])
-        except: self.trophy_rod_level = None
+        except Exception: self.trophy_rod_level = None
         try: self.review_message_id = int(data[8])
-        except: self.review_message_id = None
+        except Exception: self.review_message_id = None
         self.hex_color = str(data[7])
         self.total_caught = int(data[9])
         if not isinstance(user, (discord.User, discord.Member)):
@@ -132,7 +132,7 @@ class player:
     async def get_collection(self):
         c = await self.bot.db.execute("SELECT COUNT(*) FROM f_collections WHERE userid = ?",(self.id,))
         try: amount_caught = (await c.fetchone())[0]
-        except: amount_caught = 0
+        except Exception: amount_caught = 0
         c = await self.bot.db.execute("SELECT COUNT(*) FROM fishes")
         number_of_fish = (await c.fetchone())[0]
         return f"{amount_caught}/{number_of_fish}"
@@ -163,9 +163,9 @@ class player:
             await self.bot.db.commit()
             if data: # player exists
                 stored_id = int(data[7])
-                reviewchannel = bot.get_channel(735206051703423036)
+                reviewchannel = self.bot.get_channel(735206051703423036)
                 if reviewchannel is None:
-                    reviewchannel = await bot.fetch_channel(735206051703423036)
+                    reviewchannel = await self.bot.fetch_channel(735206051703423036)
                 if stored_id != 0: # they have a review
                     msgtoedit = await reviewchannel.fetch_message(stored_id)
                     await msgtoedit.edit(content=f"Heres a review from {str(self)} ({self.id}):```\n{reviewtext}```")
@@ -177,7 +177,7 @@ class player:
                         
                     return ("`Success! You can edit your review at any time using this command.`")
             else:
-                return (f"`I was unable to retrieve your profile. Have you done {bot.defaultprefix}start yet?`")
+                return (f"`I was unable to retrieve your profile. Have you done {self.bot.defaultprefix}start yet?`")
         except Exception as e:
             return (f"`{e}`")
         

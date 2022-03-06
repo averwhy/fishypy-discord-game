@@ -3,8 +3,7 @@ import random
 import discord
 from discord.ext import commands, menus
 from discord.ext.commands.cooldowns import BucketType
-from .utils import botchecks, botmenus
-from .utils import dbc
+from .utils import botchecks, botmenus, dbc
 OWNER_ID = 267410788996743168
 
 class playermeta(commands.Cog):
