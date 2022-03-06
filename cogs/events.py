@@ -50,13 +50,11 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
 Guild:           {guild.name}
 ID:              {guild.id}
 Owner:           {str(guild.owner)}
-Region:          {guild.region}
 Members:         {guild.member_count}
 Boosters:        {len(guild.premium_subscribers)}
 Boost level:     {guild.premium_tier}
 Channels:        {len(guild.channels)}
 Roles:           {len(guild.roles)}
-Filesize limit:  {guild.filesize_limit}
 Desc:            {(guild.description or 'None')}
 Created:         {humanize.precisedelta(guild.created_at)}
 Emoji limit:     {humanize.naturalsize(guild.emoji_limit)}```
@@ -72,13 +70,11 @@ Emoji limit:     {humanize.naturalsize(guild.emoji_limit)}```
 Guild:           {guild.name}
 ID:              {guild.id}
 Owner:           {str(guild.owner)}
-Region:          {guild.region}
 Members:         {guild.member_count}
 Boosters:        {len(guild.premium_subscribers)}
 Boost level:     {guild.premium_tier}
 Channels:        {len(guild.channels)}
 Roles:           {len(guild.roles)}
-Filesize limit:  {guild.filesize_limit}
 Desc:            {(guild.description or 'None')}
 Created:         {humanize.precisedelta(guild.created_at)}
 Emoji limit:     {humanize.naturalsize(guild.emoji_limit)}```

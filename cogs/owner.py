@@ -61,7 +61,7 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
         except:
             return await ctx.send_in_codeblock("Done", language='css')
 
-    @dev.command()
+    @dev.command(aliases=['logout','fuckoff','close','s'])
     async def stop(self, ctx):
         await ctx.send_in_codeblock("aight, seeya")
         self.bot.fishers.clear()

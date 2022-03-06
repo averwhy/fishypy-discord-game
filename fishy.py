@@ -107,7 +107,7 @@ class FpyBot(commands.Bot):
         elif isinstance(user, (discord.User, discord.Member)):
             userobj = user
         else:
-            raise TypeError(f"get_player takes either int or discord.User or discord.Member, not {type(user)}")
+            raise TypeError(f"get_player takes either int, discord.User or discord.Member, not {type(user)}")
         
         c = await self.db.execute("SELECT * FROM f_users WHERE userid = ?",(userobj.id,))
         data = await c.fetchone()
@@ -155,13 +155,13 @@ async def get_prefix(bot, message):
     if message.guild is None:
         return ""
     return bot.prefixes.get(message.guild.id, defaultprefix)
-bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions=True, messages=True, members=True, guilds=True))
+bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions=True, messages=True, members=True, guilds=True, message_content=True))
 initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shops','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
 
 #BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168
 bot.launch_time = datetime.utcnow()
-bot.version = '2.0.1'
+bot.version = '2.1.0'
 bot.socket_sent_counter = 0
 bot.socket_recieved_counter = 0
 bot.fishCaughtinsession = 0
@@ -178,7 +178,7 @@ bot.uses = {}
 bot.rodsbought = 0
 bot.last_backup_message = ""
 async def startup(bot):
-    bot.db = await aiosqlite.connect('fpy.db')
+    bot.db = await aiosqlite.connect('fpy2.db')
     await bot.db.execute('CREATE TABLE IF NOT EXISTS f_prefixes (guildid int, prefix text)')
     await bot.db.execute('CREATE TABLE IF NOT EXISTS f_users (userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer, totalcaught int, autofishingnotif int, netlevel int)')
     await bot.db.execute("CREATE TABLE IF NOT EXISTS f_bans (userid int, bannedwhen blob, reason text)")
@@ -248,8 +248,8 @@ async def on_ready():
     print('Logged in as:')
     print(bot.user.name)
     print(bot.user.id)
-    print('-------------------------------------------------------')
-    print(myname, bot.version,"is connected and running")
+    print('')
+    print(bot.user.name, bot.version,"is connected and running")
     print('-------------------------------------------------------')
 
 for cog in initial_extensions:
@@ -259,5 +259,6 @@ for cog in initial_extensions:
     except Exception as e:
         print(f"Failed to load {cog}, error:\n", file=sys.stderr)
         traceback.print_exc()
+
 asyncio.set_event_loop(asyncio.SelectorEventLoop())
 bot.run(TOKEN)

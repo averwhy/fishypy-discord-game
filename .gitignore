@@ -6,4 +6,4 @@ __pycache__/
 TOKEN.txt
 *.db
 *.out
-.vscode/settings.json
+.vscode/
