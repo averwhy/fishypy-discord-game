@@ -17,8 +17,7 @@ class IsntSupportServer(CheckFailure):
 async def is_support_server(ctx):
     if ctx.guild.id == 734581170452430888:
         return True
-    else:
-        raise IsntSupportServer()
+    raise IsntSupportServer()
 
 class fst(commands.Cog, command_attrs=dict(hidden=True)):
     """fst = Fishy Server Tools. These are commands for the support server."""

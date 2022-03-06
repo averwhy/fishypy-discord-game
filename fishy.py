@@ -134,10 +134,7 @@ class FpyBot(commands.Bot):
             return
         c = await self.db.execute("SELECT * FROM f_verified WHERE userid = ?", (user.id,))
         data = await c.fetchone()
-        if data is not None:
-            return True
-        else:
-            return False
+        return bool(data is not None)
     
     async def rodUpgradebar(self, rodlvl):
         return f"{'#' * (decimal := round(rodlvl % 1 * 15))}{'_' * (15 - decimal)}"
@@ -202,7 +199,6 @@ async def on_command_error(ctx, error): # this is an event that runs when there 
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         return
     elif isinstance(error, discord.ext.commands.errors.CommandOnCooldown): 
-        emote = str(discord.PartialEmoji(name="ppOverheat", id=772189476704616498, animated=True))
         s = round(error.retry_after,2)
         s = humanize.naturaldelta(s)
         msgtodelete = await ctx.send_in_codeblock(f"error; cooldown for {s}")

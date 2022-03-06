@@ -57,13 +57,11 @@ class meta(commands.Cog):
     async def on_prefix_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             return await ctx.send_in_codeblock("you must have Manage Guild permissions to change the servers prefix", language='ml')
-        else:
-            return await ctx.send_in_codeblock("Internal Error")
+        return await ctx.send_in_codeblock("Internal Error")
     
     @config.command(invoke_without_command=True)
     async def blacklist(self, ctx, channel = None):
         """adds or removes a channel from blacklist, depending on if it is blacklisted or not. channels in the blacklist are completely ignored by the bot {no responses, reactions, etc}. this could causes issues if called when users are fishing in it."""
-        guilds_channels = [c.id for c in ctx.guild.channels]
         guilds_blacklisted_channels = [c.name for c in ctx.guild.channels if c.id in self.bot.channel_blacklist]
         
         if channel != "all":

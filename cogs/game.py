@@ -40,7 +40,6 @@ class game(commands.Cog):
             '🐠':"https://cdn.discordapp.com/attachments/342953709870776322/509020495539077140/file.jpg",
             '🐋':"https://cdn.discordapp.com/attachments/342953709870776322/509020436118503446/file.jpg",
         }
-        # return random.sample(list(image_list.items()), k=3)
         templist = image_list
         amount_to_remove = (len(templist) - 3) # to have 3 remaining
         for r in range(amount_to_remove):
@@ -49,7 +48,7 @@ class game(commands.Cog):
         return templist
     
     def can_fish(self, userid):
-        if not userid in self.bot.fishers:
+        if userid not in self.bot.fishers:
             self.bot.fishers.append(userid)
             return True
         return False
@@ -148,7 +147,7 @@ class game(commands.Cog):
         except Exception: pass
         return False
         
-    async def start_fishing(self, ctx, fishmsg):
+    async def start_fishing(self, ctx):
         self.bot.fishers.append(ctx.author.id)
     
     @commands.command(name="fish",description="fishy.py's fish game")

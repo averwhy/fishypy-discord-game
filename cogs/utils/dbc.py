@@ -1,4 +1,3 @@
-import typing
 import discord
 from cogs.utils.botchecks import FishNotFound
 from datetime import datetime
@@ -183,7 +182,6 @@ class player:
         
     async def db_ban(self, reason):
         c = await self.bot.db.execute("SELECT * FROM f_users WHERE userid = ?",(self.id,))
-        data = await c.fetchone()
         await self.bot.db.execute("INSERT INTO bannedusers VALUES (?,?,?)",(self.id,self.name,reason,))
         await self.bot.db.commit()
         return

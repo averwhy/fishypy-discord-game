@@ -52,7 +52,6 @@ class HelpCommand(commands.HelpCommand):
         ctx = self.context
         new_msg = base_msg_command
         _ = [f"{sc.name}|" for sc in group.commands]
-        subcommands = "".join(_)
         final_msg = new_msg + (f"[{ctx.prefix}{group.name}][{group.description}]\n# {group.help}\n")
         for s in group.commands:
             final_msg += f"[{ctx.prefix}{group.name} {s.name}]({s.help})\n"

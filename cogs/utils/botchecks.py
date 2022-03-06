@@ -22,8 +22,7 @@ class IsNotInGuild(CheckFailure):
 async def is_in_guild(ctx):
     if ctx.guild is None:
         raise IsNotInGuild()
-    else:
-        return True
+    return True
     
 class AlreadyFishing(Exception):
     pass

@@ -26,7 +26,6 @@ class playermeta(commands.Cog):
         playeruser = await self.bot.get_player(user)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
-        collection_length = await self.bot.db.execute("SELECT COUNT(*) FROM f_collections WHERE userid = ?",(user.id,))
         is_verified = "  <:verified:826441930254057493>" if (await self.bot.is_verified(user)) else ""
         is_dev = "  <:developer:826440754809012244>" if user.id in [OWNER_ID, 163247205757616128] else ""
         is_bughunter = "  <:bughunter:826483661552484352>" if user.id in [267410788996743168, 187056629223522305, 715143242093690931, 610904174636564500, 443791364073848833] else ""
@@ -112,7 +111,6 @@ class playermeta(commands.Cog):
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
-        lvl = playeruser.rod_level
         cur = await self.bot.db.execute("SELECT * FROM f_users ORDER BY rodlevel DESC")
         topusers = await cur.fetchmany(10)
         step = 1
@@ -135,7 +133,6 @@ class playermeta(commands.Cog):
         playeruser = await self.bot.get_player(ctx.author)
         if playeruser is None:
             return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
-        lvl = playeruser.net_level
         cur = await self.bot.db.execute("SELECT * FROM f_users ORDER BY netlevel DESC")
         topusers = await cur.fetchmany(10)
         step = 1
