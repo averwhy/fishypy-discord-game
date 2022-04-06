@@ -38,7 +38,7 @@ class playermeta(commands.Cog):
         embed.add_field(name="__Rod__", value=f"**{playerrod.name}** (Max length {playerrod.max_length}cm)")
         playernet = await playeruser.get_net()
         embed.add_field(name="__Net__", value=f"**{playernet.name}** (Autofishing mins: {playernet.mins})")
-        embed.set_thumbnail(url=user.avatar_url)
+        embed.set_thumbnail(url=user.avatar.url)
         if playeruser.trophy_oid not in [None, 'none']:
             playertrophy = await self.bot.get_fish(playeruser.trophy_oid)
             embed.set_image(url=playertrophy.image_url)

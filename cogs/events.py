@@ -27,7 +27,7 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
         if ms in [f"{self.bot.user.mention}",f"<@!{self.bot.user.id}>",f"<@?{self.bot.user.id}>"]:
             try: prefix = self.bot.prefixes[message.guild.id]
             except KeyError: prefix = self.bot.defaultprefix
-            return await message.channel.send(f"```hey, my prefix is {prefix}```")
+            return await message.channel.send(f"```Hey, my prefix is {prefix}\nUse {prefix}help to view my commands.```")
     
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):

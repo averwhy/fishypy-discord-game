@@ -108,7 +108,7 @@ class game(commands.Cog):
         threereactions = self.select_3_reactions()
         correct_emoji, correct_emoji_url = random.choice(list(threereactions.items()))
         initial_embed = discord.Embed(title="React with:")
-        initial_embed.set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url)
+        initial_embed.set_footer(text=str(ctx.author), icon_url=ctx.author.avatar.url)
         initial_embed.set_thumbnail(url=correct_emoji_url)
         msg = await ctx.send(embed=initial_embed)
         for r in list(threereactions.keys()):
