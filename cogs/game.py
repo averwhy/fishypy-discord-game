@@ -116,7 +116,7 @@ class game(commands.Cog):
         await asyncio.sleep(self.bot.seconds_to_react)
         updatedmsg = await ctx.channel.fetch_message(msg.id)
         cr = [r for r in updatedmsg.reactions if str(r) == correct_emoji]
-        for u in (await cr[0].users()):
+        for u in [user async for user in cr[0].users()]:
             if u.id == ctx.author.id:
                 got_it_correct = True
                 break
