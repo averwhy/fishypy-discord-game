@@ -32,7 +32,13 @@ class meta(commands.Cog):
         if ctx.guild is None:
             return await ctx.send_in_codeblock("prefix cannot be changed in dm's")
         if prefix is None:
-            return await ctx.send_in_codeblock(f"current prefix is {self.bot.prefixes[ctx.guild.id]}")
+            try: this_prefix = self.bot.prefixes[ctx.guild.id]
+            except KeyError:
+                self.bot.prefixes[ctx.guild.id] = self.bot.defaultprefix
+                await self.bot.db.execute("INSERT INTO f_prefixes VALUES (?, ?)",(ctx.guild.id, self.bot.defaultprefix,))
+                await self.bot.db.commit()
+                this_prefix = self.bot.defaultprefix
+            return await ctx.send_in_codeblock(f"current prefix is {this_prefix}")
         if len(prefix) > 10:
             return await ctx.send_in_codeblock('Prefix is too long')
         if prefix.strip() == self.bot.defaultprefix:
@@ -59,18 +65,18 @@ class meta(commands.Cog):
             return await ctx.send_in_codeblock("you must have Manage Guild permissions to change the servers prefix", language='ml')
         return await ctx.send_in_codeblock("Internal Error")
     
-    @config.command(invoke_without_command=True)
+    @config.command()
     async def blacklist(self, ctx, channel = None):
         """adds or removes a channel from blacklist, depending on if it is blacklisted or not. channels in the blacklist are completely ignored by the bot {no responses, reactions, etc}. this could causes issues if called when users are fishing in it."""
         guilds_blacklisted_channels = [c.name for c in ctx.guild.channels if c.id in self.bot.channel_blacklist]
-        
-        if channel != "all":
-            channel = await TextChannelConverter().convert(ctx, channel)
         
         if not channel: 
             return await ctx.send_in_codeblock(
                 f"channels in this server: {len(ctx.guild.channels)}\nblacklisted channels: {len(guilds_blacklisted_channels)} ({', '.join(guilds_blacklisted_channels)})"
                 )
+
+        if channel != "all":
+            channel = await TextChannelConverter().convert(ctx, channel)
         
         elif channel == "all":
             check_channels = [c.id for c in ctx.guild.channels if c.id in self.bot.channel_blacklist]
@@ -90,7 +96,7 @@ class meta(commands.Cog):
             await self.bot.db.commit()
             return await ctx.send_in_codeblock(f"added {len(ctx.guild.channels) - 1} (all) channels to blacklist (except this one)")
         
-        elif channel.id in self.bot.channel_blacklist:
+        if channel.id in self.bot.channel_blacklist:
             self.bot.channel_blacklist.remove(channel.id)
             await self.bot.db.execute("DELETE FROM f_blacklist WHERE channelid = ?", (channel.id,))
             await self.bot.db.commit()
@@ -101,7 +107,6 @@ class meta(commands.Cog):
             await self.bot.db.execute("INSERT INTO f_blacklist VALUES (?)", (channel.id,))
             await self.bot.db.commit()
             return await ctx.send_in_codeblock(f"added #{str(channel)} to blacklist", language='css')
-        
         else:
             return await ctx.send_in_codeblock(f"something went wrong, please try running the command again, if this persists then please join the support server [ {ctx.prefix}support ]", language='ini')
         
@@ -126,16 +131,13 @@ class meta(commands.Cog):
         fstats = await c.fetchone()
         totalfished = fstats[0]
         totalcoinsearned = fstats[1]
-        totalrodsbought = fstats[2]
         msg = f"""```css
-Python, Discordpy Version: {platform.python_version()}, {discord.__version__}
 Fishes: {fishtotal}
 Rods: {rodtotal}
 Nets: {nettotal}
-Total Rods Bought: {totalrodsbought}
 Fish Caught (Since Start): {self.bot.fishCaughtinsession}
 Fish Caught (Total): {totalfished}
-Total Coins Earned: {totalcoinsearned}
+Total Coins Earned: {int(totalcoinsearned)}
 Users fishing: {len(self.bot.fishers)}
 Users autofishing: {len(self.bot.autofishers)}
 Uptime: {days}d, {hours}h, {minutes}m, {seconds}s```
@@ -171,8 +173,8 @@ Database Ping: {db_duration}ms```
         embed = discord.Embed(title=f"**About Fishy.py**", description="", colour=discord.Colour(0x158b94))
         embed.set_author(name=f"Developed by @averwhy#3899, Original by @Deda#9999")
         embed.set_footer(text=f"Made with Python {platform.python_version()}",icon_url="https://images-ext-1.discordapp.net/external/0KeQjRAKFJfVMXhBKPc4RBRNxlQSiieQtbSxuPuyfJg/http/i.imgur.com/5BFecvA.png")
-        embed.add_field(name="What is Fishy.py?", value="Fishy.py is a fishing style game where you compete with other users or even guilds to have the best collection, or highest level, or fish. Originally created by Deda#9999 and written in JavaScript, Fishy was a huge success and is in over 1,000 servers. Sadly, it went offline as Deda could not host it anymore. But I (averwhy#3899) have recreated it, now better than ever!")
-        embed.add_field(name="How does it work?", value="Fishy.py has a database with more than 16,000 fishes, thanks to https://www.fishbase.org ! All of them have unique images and names. When you fish, one is randomly selected from the database. However, in the future [v2], when you have a higher level you have a higher probability of catching more rare and uncommon fish!\nIn terms of technicality, Fishy.py is made with the `discord.py` API, which is a wrapper for the Discord API. Fishy.py also using `aiosqlite` for the database.")
+        embed.add_field(name="What is Fishy.py?", value="Fishy.py is a fishing style game where you compete with other users or even guilds to have the best collection, or highest level, or fish. Originally created by Deda#9999 and written in JavaScript, Fishy was a huge success and is in over 1,000 servers. Sadly, it went offline as Deda could not host it anymore. So I revived the project and remade Fishy from scratch!")
+        embed.add_field(name="How does it work?", value="Fishy.py has a database with more than 16,000 fishes, thanks to https://www.fishbase.org ! All of them have unique images and names. When you fish, one is randomly selected from the database. The better rod you have, the longer and rarer fish you can catch!\nIn terms of technicality, Fishy.py is made with the `discord.py` API, which is a wrapper for the Discord API.")
         embed.add_field(name="Have more questions? Feel free to join the support server and ask averwhy#3899!", value=f"The servers invite can be obtained via the `{ctx.prefix}support` command.",inline=False)
         await ctx.send(embed=embed)
     
@@ -189,5 +191,5 @@ Database Ping: {db_duration}ms```
         except discord.Forbidden:
             return await ctx.send("<https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=289856&scope=bot>")
             
-def setup(bot):
-    bot.add_cog(meta(bot))
+async def setup(bot):
+    await bot.add_cog(meta(bot))

@@ -101,5 +101,5 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
         await self.bot.change_presence(activity=discord.Streaming(name=name,url="https://twitch.tv/monstercat/"))
         await ctx.send("aight, done")
         
-def setup(bot):
-    bot.add_cog(owner(bot))
+async def setup(bot):
+    await bot.add_cog(owner(bot))

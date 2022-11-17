@@ -1,0 +1,5 @@
+discord.py
+aiosqlite
+humanize
+git+https://github.com/Rapptz/discord-ext-menus
+git+https://github.com/Gorialis/jishaku

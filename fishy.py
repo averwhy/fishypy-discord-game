@@ -138,7 +138,6 @@ class FpyBot(commands.Bot):
     
     async def rodUpgradebar(self, rodlvl):
         return f"{'#' * (decimal := round(rodlvl % 1 * 15))}{'_' * (15 - decimal)}"
-    #print(returned_upgradeBar)
 
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["JISHAKU_HIDE"] = "True"  
@@ -153,7 +152,6 @@ async def get_prefix(bot, message):
         return ""
     return bot.prefixes.get(message.guild.id, defaultprefix)
 bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions=True, messages=True, members=True, guilds=True, message_content=True))
-initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shops','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
 
 #BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168
@@ -174,7 +172,9 @@ bot.channel_blacklist = []
 bot.uses = {}
 bot.rodsbought = 0
 bot.last_backup_message = ""
-async def startup(bot):
+bot.initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shops','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
+
+async def startup():
     bot.db = await aiosqlite.connect('fpy.db')
     await bot.db.execute('CREATE TABLE IF NOT EXISTS f_prefixes (guildid int, prefix text)')
     await bot.db.execute('CREATE TABLE IF NOT EXISTS f_users (userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer, totalcaught int, autofishingnotif int, netlevel int)')
@@ -190,7 +190,22 @@ async def startup(bot):
     dbprefixes = await cur.fetchall()
     bot.prefixes = {guild_id: prefix for guild_id, prefix in dbprefixes}
     await bot.db.commit()
-bot.loop.create_task(startup(bot))
+
+    success = failed = 0
+    for cog in bot.initial_extensions:
+        try:
+            await bot.load_extension(f"{cog}")
+            success += 1
+        except Exception as e:
+            print(f"failed to load {cog}, error:\n", file=sys.stderr)
+            failed += 1
+            traceback.print_exc()
+        finally:
+            continue
+    print(f"loaded {success} cogs successfully, with {failed} failures.")
+
+    async with bot:
+        await bot.start(TOKEN)
 
 ############################################################################################################################################################################################
 
@@ -248,13 +263,6 @@ async def on_ready():
     print(bot.user.name, bot.version,"is connected and running")
     print('-------------------------------------------------------')
 
-for cog in initial_extensions:
-    try:
-        bot.load_extension(f"{cog}")
-        print(f"loaded {cog}")
-    except Exception as e:
-        print(f"Failed to load {cog}, error:\n", file=sys.stderr)
-        traceback.print_exc()
-
-asyncio.set_event_loop(asyncio.SelectorEventLoop())
-bot.run(TOKEN)
+if __name__ == "__main__":      
+    asyncio.set_event_loop(asyncio.SelectorEventLoop())
+    asyncio.run(startup())

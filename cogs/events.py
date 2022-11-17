@@ -102,5 +102,5 @@ Emoji limit:     {humanize.naturalsize(guild.emoji_limit)}```
     #         pass
         
         
-def setup(bot):
-    bot.add_cog(events(bot))
+async def setup(bot):
+    await bot.add_cog(events(bot))

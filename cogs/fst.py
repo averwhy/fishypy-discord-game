@@ -152,5 +152,5 @@ class fst(commands.Cog, command_attrs=dict(hidden=True)):
         except Exception as e:
             await ctx.send(f"`Something went wrong:` ```\n{e}\n```")
             
-def setup(bot):
-    bot.add_cog(fst(bot))
+async def setup(bot):
+    await bot.add_cog(fst(bot))

@@ -74,5 +74,5 @@ class newhelp(commands.Cog, command_attrs=dict(hidden=True)):
         bot.help_command.cog = self
 
 
-def setup(bot):
-    bot.add_cog(newhelp(bot))
+async def setup(bot):
+    await bot.add_cog(newhelp(bot))

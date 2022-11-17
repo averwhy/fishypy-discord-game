@@ -117,6 +117,6 @@ async def attempt_add_reaction(msg: discord.Message, reaction: Union[str, discor
 
 jishaku.exception_handling.attempt_add_reaction = attempt_add_reaction
 
-def setup(bot):
+async def setup(bot):
     # bot.add_cog(CustomDebugCog(bot=bot))
     pass

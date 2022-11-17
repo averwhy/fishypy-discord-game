@@ -161,7 +161,7 @@ class playermeta(commands.Cog):
         table = ""
         for r in topusers:
             player = await self.bot.get_player(r[0])
-            table = table + f"{step}. {player.name} : {player.coins} coins)\n"
+            table = table + f"{step}. {player.name} : {int(player.coins)} coins)\n"
             step += 1
         c = await self.bot.db.execute("SELECT * FROM (SELECT userid, RANK() OVER (ORDER BY coins DESC) AS coins FROM f_users) a WHERE userid = ?;",(playeruser.id,)) # i love this statement
         player_pos = (await c.fetchone())[1]
@@ -186,7 +186,7 @@ class playermeta(commands.Cog):
             num_of_fish = await c.fetchone()
             for r in sortedtopusers:
                 player = await self.bot.get_player(r[0])
-                table = table + f"{step}. {player.name} : {r[1]}/{num_of_fish[0]})\n"
+                table = table + f"{step}. {player.name} : ({r[1]}/{num_of_fish[0]}) ({round((r[1]/num_of_fish[0])*100,2)}%)\n"
                 step += 1
                 if step == 10: break
             pos = 1
@@ -252,5 +252,5 @@ class playermeta(commands.Cog):
 
         
             
-def setup(bot):
-    bot.add_cog(playermeta(bot))
+async def setup(bot):
+    await bot.add_cog(playermeta(bot))

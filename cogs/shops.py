@@ -31,7 +31,7 @@ class shops(commands.Cog):
                 data = await cur.fetchone()
                 table = table + f"\n[{data[1]}][{data[2]} coins]"
         
-        table = table + f"\n(and more...)({playeruser.coins} coins)"
+        table = table + f"\n(and more...)({round(playeruser.coins,1)} coins)"
         await ctx.reply_in_codeblock(table, language='md')
         
     @shop.command(aliases=["net","n"])
@@ -56,7 +56,7 @@ class shops(commands.Cog):
                 data = await cur.fetchone()
                 table = table + f"\n[{data[1]}][{data[2]} coins]"
         
-        table = table + f"\n(and more...)({playeruser.coins} coins)"
+        table = table + f"\n(and more...)({round(playeruser.coins,1)} coins)"
         await ctx.reply_in_codeblock(table, language='md')
     
     @commands.group(invoke_without_command=True, aliases=["u"], description="buy new rods or nets automatically")
@@ -105,6 +105,6 @@ class shops(commands.Cog):
         await ctx.reply_in_codeblock(f"success! new net: {data[1]}")
         
             
-def setup(bot):
-    bot.add_cog(shops(bot))
+async def setup(bot):
+    await bot.add_cog(shops(bot))
         

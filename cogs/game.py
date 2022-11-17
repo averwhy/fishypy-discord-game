@@ -98,7 +98,7 @@ class game(commands.Cog):
         try: self.bot.autofishers.remove(player.id)
         except ValueError: pass
         
-        await player.user.send(f"```md\n#____________AUTOFISHING {stopped_or_cancelled}____________#\nfishing time: {playernet.minutes} minutes {actual_fishing_time}\nfish caught: {caught}\ncoins eared: {coins}\n```")
+        await player.user.send(f"```md\n#____________AUTOFISHING {stopped_or_cancelled}____________#\nfishing time: {playernet.minutes} minutes {actual_fishing_time}\nfish caught: {caught}\ncoins earned: {coins}\n```")
         return
     
     async def do_fish(self, ctx, player):
@@ -231,11 +231,11 @@ class game(commands.Cog):
         l4 = "✓" if player.autofishing_notif == 4 else "x"
         l5 = "✓" if player.autofishing_notif == 5 else "x"
         await ctx.send_in_codeblock(f"""#______DM NOTIFICATIONS______#
-[without notification][{l5}](!set 5)
-[extremely rare only][{l4}](!set 4)
-[very rare and above][{l3}](!set 3)
-[rare and above][{l2}](!set 2)
-[all catches][{l1}](!set 1)""",
+[without notification][{l5}](!af set 5)
+[extremely rare only][{l4}](!af set 4)
+[very rare and above][{l3}](!af set 3)
+[rare and above][{l2}](!af set 2)
+[all catches][{l1}](!af set 1)""",
 language='md')
         
 
@@ -255,5 +255,5 @@ language='md')
         await self.bot.db.commit()
         return await ctx.send_in_codeblock("done", language='css')
                 
-def setup(bot):
-    bot.add_cog(game(bot))
+async def setup(bot):
+    await bot.add_cog(game(bot))
