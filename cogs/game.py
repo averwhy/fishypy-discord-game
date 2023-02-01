@@ -76,30 +76,40 @@ class game(commands.Cog):
             coins += round(coins_earned,2)
             caught += 1
             
-            if fish.rarity > dbc.EXTREMELY_RARE:
-                if player.autofishing_notif <= 4: 
-                    await player.user.send(embed=embed)
-            elif fish.rarity > dbc.VERY_RARE:
-                if player.autofishing_notif <= 3:
-                    await player.user.send(embed=embed)
-            elif fish.rarity > dbc.RARE:
-                if player.autofishing_notif <= 2:
-                    await player.user.send(embed=embed)
-            elif fish.rarity > dbc.COMMON:
-                if player.autofishing_notif <= 1:
-                    await player.user.send(embed=embed)
-            else:
+            try:
+                if fish.rarity > dbc.EXTREMELY_RARE:
+                    if player.autofishing_notif <= 4: 
+                        await player.user.send(embed=embed)
+                elif fish.rarity > dbc.VERY_RARE:
+                    if player.autofishing_notif <= 3:
+                        await player.user.send(embed=embed)
+                elif fish.rarity > dbc.RARE:
+                    if player.autofishing_notif <= 2:
+                        await player.user.send(embed=embed)
+                elif fish.rarity > dbc.COMMON:
+                    if player.autofishing_notif <= 1:
+                        await player.user.send(embed=embed)
+                else:
+                    pass
+            except discord.errors.Forbidden:
+                # Can't DM user
                 pass
-            self.bot.dispatch("fish_catch", player, fish, (coins_earned - (coins_earned * 0.10)), autofish=True)
-            await asyncio.sleep(10)
+            finally:
+                self.bot.dispatch("fish_catch", player, fish, (coins_earned - (coins_earned * 0.10)), autofish=True)
+                await asyncio.sleep(11)
 
         actual_fishing_time = f"(actual time {humanize.precisedelta(actual_start)})" if player.id not in self.bot.autofishers else ""
         stopped_or_cancelled = "FINISHED" if player.id in self.bot.autofishers else "CANCELLED"
         try: self.bot.autofishers.remove(player.id)
         except ValueError: pass
         
-        await player.user.send(f"```md\n#____________AUTOFISHING {stopped_or_cancelled}____________#\nfishing time: {playernet.minutes} minutes {actual_fishing_time}\nfish caught: {caught}\ncoins earned: {coins}\n```")
-        return
+        try:
+            await player.user.send(f"```md\n#____________AUTOFISHING {stopped_or_cancelled}____________#\nfishing time: {playernet.minutes} minutes {actual_fishing_time}\nfish caught: {caught}\ncoins earned: {coins}\n```")
+        except discord.errors.Forbidden:
+            # No perms to DM player
+            pass
+        finally:
+            return
     
     async def do_fish(self, ctx, player):
         msg = None

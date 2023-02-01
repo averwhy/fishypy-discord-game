@@ -208,19 +208,19 @@ async def startup():
         await bot.start(TOKEN)
 
 ############################################################################################################################################################################################
-
+from discord.ext.commands.errors import CommandNotFound, CommandOnCooldown, NotOwner
 @bot.event
 async def on_command_error(ctx, error): # this is an event that runs when there is an error
-    if isinstance(error, discord.ext.commands.errors.CommandNotFound):
+    if isinstance(error, CommandNotFound):
         return
-    elif isinstance(error, discord.ext.commands.errors.CommandOnCooldown): 
+    elif isinstance(error, CommandOnCooldown): 
         s = round(error.retry_after,2)
         s = humanize.naturaldelta(s)
         msgtodelete = await ctx.send_in_codeblock(f"error; cooldown for {s}")
         await asyncio.sleep(bot.secondstoReact)
         await msgtodelete.delete()
         return
-    elif isinstance(error, discord.ext.commands.errors.NotOwner):
+    elif isinstance(error, NotOwner):
         msgtodelete = await ctx.send_in_codeblock("error; missing permissions")
         await asyncio.sleep(15)
         await msgtodelete.delete()
@@ -232,7 +232,7 @@ async def on_command_error(ctx, error): # this is an event that runs when there 
         return
     elif isinstance(error, botchecks.BlacklistedChannel):
         return
-    elif isinstance(error, discord.Forbidden):
+    elif isinstance(error, discord.errors.Forbidden):
         try:
             await ctx.send_in_codeblock("error; i'm missing some permissions. please make sure i have embed permissions, manage messages, and use external emojis.")
         except Exception:
