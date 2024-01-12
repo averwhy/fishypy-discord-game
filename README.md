@@ -1,6 +1,6 @@
 # Fishy.py - Bot for Discord #
 ![Discord](https://img.shields.io/discord/734581170452430888)
-[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
+![GitHub License](https://img.shields.io/github/license/averwhy/fishypy-discord-game)
 ![GitHub last commit](https://img.shields.io/github/last-commit/averwhy/fishypy-discord-game)
 ![GitHub issues](https://img.shields.io/github/issues/averwhy/fishypy-discord-game)
 [![DeepSource](https://deepsource.io/gh/averwhy/fishypy-discord-game.svg/?label=active+issues&show_trend=true&token=BbhegRz6PPxXwuxHIC7bo-oF)](https://deepsource.io/gh/averwhy/fishypy-discord-game/?ref=repository-badge)
