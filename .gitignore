@@ -7,3 +7,4 @@ TOKEN.txt
 *.db
 *.out
 .vscode/
+*.old

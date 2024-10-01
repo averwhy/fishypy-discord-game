@@ -5,6 +5,7 @@ import discord
 from datetime import datetime, timedelta
 from discord.ext import commands
 import humanize
+import objgraph
 
 from .utils import botchecks, dbc
 

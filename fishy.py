@@ -9,6 +9,10 @@ from datetime import datetime
 from discord.ext import commands
 import humanize
 
+import objgraph
+import io
+from contextlib import redirect_stdout
+
 from cogs.utils import dbc, botchecks
 #BOT##########################################################################################################
 class FishyContext(commands.Context):
@@ -47,6 +51,36 @@ class FpyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
     
+    async def setup_hook(self):
+        self.db = await aiosqlite.connect('fpy.db')
+        await self.db.execute('CREATE TABLE IF NOT EXISTS f_prefixes (guildid int, prefix text)')
+        await self.db.execute('CREATE TABLE IF NOT EXISTS f_users (userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer, totalcaught int, autofishingnotif int, netlevel int)')
+        await self.db.execute("CREATE TABLE IF NOT EXISTS f_bans (userid int, bannedwhen blob, reason text)")
+        await self.db.execute("CREATE TABLE IF NOT EXISTS f_collections (userid int, oid blob)")
+        await self.db.execute("CREATE TABLE IF NOT EXISTS f_rods (level int, name text, cost int)") # Not for users
+        await self.db.execute("CREATE TABLE IF NOT EXISTS f_nets (level int, name text, cost int, mins double)") # Also not for users
+        await self.db.execute("CREATE TABLE IF NOT EXISTS f_stats (totalfished int, totalcoinsearned int, totalrodsbought int, totalautofished int)")
+        await self.db.execute("CREATE TABLE IF NOT EXISTS f_blacklist (channelid int)")
+        await self.db.execute("CREATE TABLE IF NOT EXISTS f_verified (userid int)")
+
+        cur = await self.db.execute('SELECT * FROM f_prefixes')
+        dbprefixes = await cur.fetchall()
+        self.prefixes = {guild_id: prefix for guild_id, prefix in dbprefixes}
+        await self.db.commit()
+
+        success = failed = 0
+        for cog in self.initial_extensions:
+            try:
+                await self.load_extension(f"{cog}")
+                success += 1
+            except Exception as e:
+                print(f"failed to load {cog}, error:\n", file=sys.stderr)
+                failed += 1
+                traceback.print_exc()
+            finally:
+                continue
+        print(f"loaded {success} cogs successfully, with {failed} failures.")
+
     async def get_context(self, message, *, cls=FishyContext):
         return await super().get_context(message, cls=cls)
     
@@ -151,7 +185,7 @@ async def get_prefix(bot, message):
     if message.guild is None:
         return ""
     return bot.prefixes.get(message.guild.id, defaultprefix)
-bot = FpyBot(command_prefix=get_prefix,intents=discord.Intents(reactions=True, messages=True, members=True, guilds=True, message_content=True))
+bot = FpyBot(command_prefix=get_prefix, chunk_guilds_on_startup=False,intents=discord.Intents(reactions=True, messages=True, members=True, guilds=True, message_content=True))
 
 #BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168
@@ -175,35 +209,6 @@ bot.last_backup_message = ""
 bot.initial_extensions = ['jishaku','cogs.jsk_override', 'cogs.owner', 'cogs.shops','cogs.fst', 'cogs.meta', 'cogs.events', 'cogs.game', 'cogs.newhelp', 'cogs.playermeta']
 
 async def startup():
-    bot.db = await aiosqlite.connect('fpy.db')
-    await bot.db.execute('CREATE TABLE IF NOT EXISTS f_prefixes (guildid int, prefix text)')
-    await bot.db.execute('CREATE TABLE IF NOT EXISTS f_users (userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer, totalcaught int, autofishingnotif int, netlevel int)')
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_bans (userid int, bannedwhen blob, reason text)")
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_collections (userid int, oid blob)")
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_rods (level int, name text, cost int)") # Not for users
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_nets (level int, name text, cost int, mins double)") # Also not for users
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_stats (totalfished int, totalcoinsearned int, totalrodsbought int, totalautofished int)")
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_blacklist (channelid int)")
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS f_verified (userid int)")
-    
-    cur = await bot.db.execute('SELECT * FROM f_prefixes')
-    dbprefixes = await cur.fetchall()
-    bot.prefixes = {guild_id: prefix for guild_id, prefix in dbprefixes}
-    await bot.db.commit()
-
-    success = failed = 0
-    for cog in bot.initial_extensions:
-        try:
-            await bot.load_extension(f"{cog}")
-            success += 1
-        except Exception as e:
-            print(f"failed to load {cog}, error:\n", file=sys.stderr)
-            failed += 1
-            traceback.print_exc()
-        finally:
-            continue
-    print(f"loaded {success} cogs successfully, with {failed} failures.")
-
     async with bot:
         await bot.start(TOKEN)
 
@@ -211,7 +216,7 @@ async def startup():
 from discord.ext.commands.errors import CommandNotFound, CommandOnCooldown, NotOwner
 @bot.event
 async def on_command_error(ctx, error): # this is an event that runs when there is an error
-    if isinstance(error, CommandNotFound):
+    if isinstance(error, commands.errors.CommandNotFound):
         return
     elif isinstance(error, CommandOnCooldown): 
         s = round(error.retry_after,2)
@@ -253,6 +258,15 @@ async def blacklist_check(ctx: FishyContext):
         raise botchecks.BlacklistedChannel()
     else: return True
 
+@bot.command(hidden=True)
+async def leakcheck(ctx):
+    """Developer command to check results of objgraph"""
+    async with ctx.channel.typing():
+        with io.StringIO() as buf, redirect_stdout(buf):
+            objgraph.show_most_common_types(limit=30)
+            output = buf.getvalue()
+    return await ctx.send(f"```py\n{output}```")
+
 @bot.event
 async def on_ready():
     print('-------------------------------------------------------')
@@ -261,8 +275,10 @@ async def on_ready():
     print(bot.user.id)
     print('')
     print(bot.user.name, bot.version,"is connected and running")
+    print(f'Time since start: {humanize.precisedelta(bot.launch_time)}')
     print('-------------------------------------------------------')
 
-if __name__ == "__main__":      
+if __name__ == "__main__":
+    discord.utils.setup_logging(root=True)
     asyncio.set_event_loop(asyncio.SelectorEventLoop())
     asyncio.run(startup())
