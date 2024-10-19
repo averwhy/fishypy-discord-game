@@ -1,11 +1,15 @@
 import sqlite3
-conn = sqlite3.connect('fpy.db')
+
+conn = sqlite3.connect("fpy.db")
 c = conn.cursor()
 print("Database not found. Necessary values were inserted.")
 conn.commit()
-c.execute('''CREATE TABLE fishes
-        (oid text, imgurl text, rarity text, id integer, length real, name text, fishlength real)''')
-c.execute('''INSERT INTO fishes VALUES
+c.execute(
+    """CREATE TABLE fishes
+        (oid text, imgurl text, rarity text, id integer, length real, name text, fishlength real)"""
+)
+c.execute(
+    """INSERT INTO fishes VALUES
 ('5ac88a55eadcdf42044615bb','http://www.fishbase.org/images/thumbnails/jpg/tn_Prweb_u0.jpg',1,0,3.1,'Aapticheilichthys websteri',3.1),
 ('5ac88a5ceadcdf42044615bc','http://www.fishbase.org/images/thumbnails/jpg/tn_Melab_u0.jpg',1,1,11.5,'Abactochromis labrosus',11.5),
 ('5ac88a5eeadcdf42044615bd','http://www.fishbase.org/images/thumbnails/jpg/tn_Abfil_u0.jpg',0.625,2,32.5,'Abalistes filamentosus',32.5),
@@ -16211,7 +16215,8 @@ c.execute('''INSERT INTO fishes VALUES
 ('5acb817052eae82ef6ff58e9','http://www.fishbase.org/images/thumbnails/jpg/tn_Zooph_u1.jpg',1,16202,29.9,'Zosterisessor ophiocephalus',29.9),
 ('5acb817252eae82ef6ff58ea','http://www.fishbase.org/images/thumbnails/jpg/tn_Zucri_u0.jpg',0.751,16203,118,'Zu cristatus',118.0),
 ('5acb817652eae82ef6ff58eb','http://www.fishbase.org/images/thumbnails/jpg/tn_Zujah_u1.jpg',0.75,16204,140,'Zungaro jahu',140.0),
-('5acb817852eae82ef6ff58ec','http://www.fishbase.org/images/thumbnails/jpg/tn_Zuzun_u7.jpg',0.75,16205,140,'Zungaro zungaro',140.0);''')
+('5acb817852eae82ef6ff58ec','http://www.fishbase.org/images/thumbnails/jpg/tn_Zuzun_u7.jpg',0.75,16205,140,'Zungaro zungaro',140.0);"""
+)
 conn.commit()
 conn.close()
 print("done?")

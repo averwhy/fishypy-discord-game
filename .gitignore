@@ -5,6 +5,7 @@ __pycache__/
 .TOKEN
 TOKEN.txt
 *.db
+*.db-journal
 *.out
 .vscode/
 *.old
