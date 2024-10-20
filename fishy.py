@@ -91,7 +91,7 @@ class FpyBot(commands.Bot):
             "CREATE TABLE IF NOT EXISTS f_prefixes (guildid int, prefix text)"
         )
         await self.db.execute(
-            "CREATE TABLE IF NOT EXISTS f_users (userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer, totalcaught int, autofishingnotif int, netlevel int)"
+            "CREATE TABLE IF NOT EXISTS f_users (userid integer, name text, guildid integer, rodlevel int, coins double, trophyoid text, trophyrodlvl int, hexcolor text, reviewmsgid integer, totalcaught int, autofishingnotif int, netlevel int, highestrod int)"
         )
         await self.db.execute(
             "CREATE TABLE IF NOT EXISTS f_bans (userid int, bannedwhen blob, reason text)"
