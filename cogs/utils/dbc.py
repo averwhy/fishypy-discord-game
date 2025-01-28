@@ -77,7 +77,7 @@ class player:
         if existingplayer:
             return False
         await bot.db.execute(
-            "INSERT INTO f_users VALUES (?, ?, 0, 1, 0, 'none', 0, 'none', 0, 0, 1, 1)",
+            "INSERT INTO f_users VALUES (?, ?, 0, 1, 0, 'none', 0, 'none', 0, 0, 1, 1, 0)",
             (
                 user.id,
                 user.name,

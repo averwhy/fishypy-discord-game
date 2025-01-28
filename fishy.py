@@ -242,7 +242,7 @@ class FpyBot(commands.Bot):
 
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["JISHAKU_HIDE"] = "True"
-with open("TOKEN.txt", "r") as t:
+with open(os.environ['SECRETS'], "r") as t:
     TOKEN = t.readline()
 userid = "695328763960885269"
 myname = "Fishy.py"

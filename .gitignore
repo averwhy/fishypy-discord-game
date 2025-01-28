@@ -9,3 +9,4 @@ TOKEN.txt
 *.out
 .vscode/
 *.old
+docker-compose.yml
