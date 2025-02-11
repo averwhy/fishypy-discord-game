@@ -2,13 +2,12 @@ import asyncio
 import random
 from typing import Any
 import discord
-from datetime import datetime, timedelta
+from datetime import timedelta
 from discord.ext import commands
 import humanize
 import objgraph
 
 from .utils import botchecks, dbc
-
 
 class game(commands.Cog):
     def __init__(self, bot):
@@ -70,12 +69,12 @@ class game(commands.Cog):
 
     async def do_autofishing(self, ctx, player):
         playernet = await player.get_net()
-        actual_start = datetime.utcnow()
-        time_end = datetime.utcnow() + timedelta(minutes=playernet.minutes)
+        actual_start = discord.utils.utcnow()
+        time_end = discord.utils.utcnow() + timedelta(minutes=playernet.minutes)
         caught = 0
         coins = 0
 
-        while ctx.author.id in self.bot.autofishers and datetime.utcnow() < time_end:
+        while ctx.author.id in self.bot.autofishers and discord.utils.utcnow() < time_end:
             fish = await ctx.random_fish(player.rod)
             splitname = fish.name.split()
             caught_before = (

@@ -115,7 +115,7 @@ for c2 in categories2:
         rodnum += 1
         price_increase = random.randint(45, 95)
         price += price_increase
-        # print(f"Rod {rodnum}. {r2} {c2} ({price} coins) Max length = {(rodnum * 3.5)}cm")
+        # print(f"Rod {rodnum}. {r2} {c2} ({price} coins) Max length = {(rodnum * 3.163265306122449)}cm")
         name2 = f"{r2} {c2}"
         conn.execute(
             "INSERT INTO f_rods VALUES (?, ?, ?)",

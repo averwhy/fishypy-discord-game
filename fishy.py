@@ -5,7 +5,6 @@ import os, sys
 import aiosqlite
 import discord
 import math, random
-from datetime import datetime
 from discord.ext import commands
 import humanize
 
@@ -266,10 +265,8 @@ bot = FpyBot(
 
 # BOT#VARS#####################################################################################################
 bot.ownerID = 267410788996743168
-bot.launch_time = datetime.utcnow()
-bot.version = "2.1.0"
-bot.socket_sent_counter = 0
-bot.socket_recieved_counter = 0
+bot.launch_time = discord.utils.utcnow()
+bot.version = "2.1.2"
 bot.fishCaughtinsession = 0
 bot.coinsEarnedInSession = 0
 bot.commandsRun = 0

@@ -1,7 +1,6 @@
 import discord
 import platform
 import time
-from datetime import datetime
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import TextChannelConverter
@@ -13,14 +12,6 @@ class meta(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_socket_raw_send(self, payload):
-        self.bot.socket_sent_counter += 1
-
-    @commands.Cog.listener()
-    async def on_socket_raw_receive(self, payload):
-        self.bot.socket_recieved_counter += 1
-
     @commands.group(
         invoke_without_command=True,
         description="changing config for the server (admins only)",
@@ -29,7 +20,7 @@ class meta(commands.Cog):
         commands.has_permissions(manage_guild=True), commands.is_owner()
     )
     async def config(self, ctx):
-        """currently you can do 2 things with this command:  1. change server prefix. it only affects the server.  2. blacklist channels. it will prevent the bot from being used in specified channels."""
+        """currently you can do 2 things with this command:  1. change server prefix. (it only affects the guild)  2. blacklist channels. it will prevent the bot from being used in specified channels."""
         return await ctx.send_in_codeblock(
             f"please specify, {ctx.prefix}config [prefix/blacklist]"
         )
@@ -40,7 +31,7 @@ class meta(commands.Cog):
     @config.command(
         name="prefix",
         aliases=["pre"],
-        description="changing bot prefix for server(admins only)",
+        description="changes bot prefix for server (admins only)",
     )
     async def set_prefix(self, ctx, prefix=None):
         """prefix command. allows you to see current prefix, if no prefix is specified. prefix can only be changed by users with the Manage Guild permission. (and the bot owner)"""
@@ -183,7 +174,7 @@ class meta(commands.Cog):
     async def stats(self, ctx):  # info thing
         """shows bot statistics, such as versions, ping (connection to discord), total fish caught, users fishing, etc"""
         # now lets get uptime and fancy it
-        delta_uptime = datetime.utcnow() - self.bot.launch_time
+        delta_uptime = discord.utils.utcnow() - self.bot.launch_time
         hours, remainder = divmod(int(delta_uptime.total_seconds()), 3600)
         minutes, seconds = divmod(remainder, 60)
         days, hours = divmod(hours, 24)
@@ -240,7 +231,7 @@ Database Ping: {db_duration}ms```
         embed = discord.Embed(
             title=f"**About Fishy.py**", description="", colour=discord.Colour(0x158B94)
         )
-        embed.set_author(name=f"Developed by @averwhy#3899, Original by @Deda#9999")
+        embed.set_author(name=f"Developed by @averwhy, original by @Deda")
         embed.set_footer(
             text=f"Made with Python {platform.python_version()}",
             icon_url="https://images-ext-1.discordapp.net/external/0KeQjRAKFJfVMXhBKPc4RBRNxlQSiieQtbSxuPuyfJg/http/i.imgur.com/5BFecvA.png",

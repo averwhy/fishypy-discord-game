@@ -1,6 +1,5 @@
 import discord
 from cogs.utils.botchecks import FishNotFound
-from datetime import datetime
 
 # Rarities
 # if the rarity is above the number in the variable, then it is that rarity
@@ -50,7 +49,7 @@ class player:
         self.guild_id = int(data[2])
         self.rod = self.rod_level = int(data[3])
         self.coins = float(data[4])
-        self.as_of = datetime.utcnow()  # shows how up to date the object is
+        self.as_of = discord.utils.utcnow()  # shows how up to date the object is
         try:
             self.trophy_oid = str(data[5])
         except Exception:
@@ -113,7 +112,7 @@ class player:
         self.guild_id = int(data[2])
         self.rod = self.rod_level = int(data[3])
         self.coins = float(data[4])
-        self.as_of = datetime.utcnow()  # shows how up to date the object is
+        self.as_of = discord.utils.utcnow()  # shows how up to date the object is
         try:
             self.trophy_oid = str(data[5])
         except Exception:

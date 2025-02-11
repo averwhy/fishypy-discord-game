@@ -4,7 +4,6 @@ from discord.ext.commands import check
 import aiosqlite
 import random
 from discord.ext import menus
-from datetime import datetime
 from .utils import botmenus
 
 OWNER_ID = 267410788996743168
@@ -31,11 +30,11 @@ class owner(commands.Cog, command_attrs=dict(hidden=True)):
             await self.bot.backup_db.commit()
             await self.bot.backup_db.close()
             self.bot.last_backup_message = (
-                f"The database backed up successfully at {str(datetime.utcnow())}"
+                f"The database backed up successfully at {str(discord.utils.utcnow())}"
             )
             return
         except Exception as e:
-            self.bot.last_backup_message = f"An error occured while backing up the database at {str(datetime.utcnow())}: {e}"
+            self.bot.last_backup_message = f"An error occured while backing up the database at {str(discord.utils.utcnow())}: {e}"
             return
 
     @commands.group(invoke_without_command=True, hidden=True)
