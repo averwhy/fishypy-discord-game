@@ -9,6 +9,7 @@ import objgraph
 
 from .utils import botchecks, dbc
 
+
 class game(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -74,7 +75,9 @@ class game(commands.Cog):
         caught = 0
         coins = 0
 
-        while ctx.author.id in self.bot.autofishers and discord.utils.utcnow() < time_end:
+        while (
+            ctx.author.id in self.bot.autofishers and discord.utils.utcnow() < time_end
+        ):
             fish = await ctx.fish(player.rod)
             splitname = fish.name.split()
             caught_before = (

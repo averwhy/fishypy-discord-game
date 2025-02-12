@@ -4,16 +4,14 @@ import asyncio
 import os, sys
 import aiosqlite
 import discord
-import math, random
+import random
 from discord.ext import commands
 import humanize
 import typing
 import objgraph
 import io
 from contextlib import redirect_stdout
-
 from cogs.utils import dbc, botchecks
-
 
 # BOT##########################################################################################################
 class FishyContext(commands.Context):
@@ -55,7 +53,7 @@ class FishyContext(commands.Context):
 
         cur = await self.bot.db.execute(
             "SELECT oid, rarity, fishlength FROM fishes WHERE fishlength <= ?",
-            (max_length,)
+            (max_length,),
         )
         fish_list = await cur.fetchall()
         if not fish_list:
@@ -67,7 +65,13 @@ class FishyContext(commands.Context):
             rarity = float(fish[1])
             fishlength = float(fish[2])
 
-            weighted_rarity = (rarity * (1 + (rod_level * bot.RARITY_SCALING_FACTOR / 100))) + (fishlength * (1 + (rod_level * bot.LENGTH_SCALING_FACTOR / 100)) / max_length)
+            weighted_rarity = (
+                rarity * (1 + (rod_level * bot.RARITY_SCALING_FACTOR / 100))
+            ) + (
+                fishlength
+                * (1 + (rod_level * bot.LENGTH_SCALING_FACTOR / 100))
+                / max_length
+            )
             weighted_rarities.append(weighted_rarity)
             total_weighted_rarity += weighted_rarity
 
@@ -78,12 +82,16 @@ class FishyContext(commands.Context):
             cumulative_probability += probability
             if random_value < cumulative_probability:
                 # Fetch the complete fish data using the oid
-                cur = await self.bot.db.execute("SELECT * FROM fishes WHERE oid = ?", (fish_list[i][0],))
+                cur = await self.bot.db.execute(
+                    "SELECT * FROM fishes WHERE oid = ?", (fish_list[i][0],)
+                )
                 fish_data = await cur.fetchone()
                 return dbc.Fish(self.bot, fish_data)
 
         # Fallback
-        cur = await self.bot.db.execute("SELECT * FROM fishes WHERE oid = ?", (fish_list[-1][0],))
+        cur = await self.bot.db.execute(
+            "SELECT * FROM fishes WHERE oid = ?", (fish_list[-1][0],)
+        )
         fish_data = await cur.fetchone()
         return dbc.Fish(self.bot, fish_data)
 
@@ -220,7 +228,7 @@ class FpyBot(commands.Bot):
         return dbc.Player(self, data, userobj)
 
     async def get_fish(self, oid) -> typing.Union[dbc.Fish, None]:
-        """Gets a fish by OID, returns None if theres nothing matching."""
+        """Gets a Fish by OID, returns None if theres nothing matching."""
         c = await self.db.execute("SELECT * FROM fishes WHERE oid = ?", (oid,))
         data = await c.fetchone()
         if data is None:
@@ -250,7 +258,7 @@ class FpyBot(commands.Bot):
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
-with open(os.environ['SECRETS'], "r") as t:
+with open(os.environ["SECRETS"], "r") as t:
     TOKEN = t.readline()
 userid = "695328763960885269"
 myname = "Fishy.py"
@@ -304,11 +312,9 @@ bot.initial_extensions = [
     "cogs.playermeta",
 ]
 
-
 async def startup():
     async with bot:
         await bot.start(TOKEN)
-
 
 ############################################################################################################################################################################################
 from discord.ext.commands.errors import CommandNotFound, CommandOnCooldown, NotOwner
@@ -356,7 +362,6 @@ async def on_command_error(
             traceback.print_exception(
                 type(error), error, error.__traceback__, file=sys.stderr
             )
-            # await ctx.send_in_codeblock(f"Internal Error\n- {error}",language='diff')
     else:
         bot.commandsFailed += 1
         # All other Errors not returned come here. And we can just print the default TraceBack.

@@ -373,7 +373,7 @@ class playermeta(commands.Cog):
     #     playeruser = await self.bot.get_player(ctx.author)
     #     if playeruser is None:
     #         return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
-        
+
     #     playerrod = await playeruser.get_rod()
     #     maxlevel = playerrod.level
     #     if new_rod_lvl > maxlevel:

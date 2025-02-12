@@ -1,16 +1,41 @@
 import discord
 import platform
 import time
+import logging
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext.commands import TextChannelConverter
+from .utils.botmenus import TrashView
+from fishy import FpyBot
+
+log = logging.getLogger(__name__)
 
 OWNER_ID = 267410788996743168
+VALID_CHANNEL_NAMES_FOR_WELCOME_MESSAGE = ("general", "chat", "bot", "bots")
+WELCOME_MESSAGE = """```fix
+thanks for adding me - i'm Fishy.py, a fishing game for Discord. To get started, type !help.
+if you need support in any way, feel free to reach out with !support```
+-# admins: to configure me, see <!help config>"""
 
 
 class meta(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: FpyBot = bot
+
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild: discord.Guild):
+        best_channel = [
+            channel
+            for channel in guild.channels
+            if channel.permissions_for(guild.me).send_messages
+            and channel.name in VALID_CHANNEL_NAMES_FOR_WELCOME_MESSAGE
+        ][0]
+        if best_channel is None:
+            return
+        tview = TrashView(timeout=300)
+        welcome_msg = await best_channel.send(WELCOME_MESSAGE, view=tview)
+        await tview.wait()
+        await welcome_msg.edit(view=None)
 
     @commands.group(
         invoke_without_command=True,
@@ -34,7 +59,7 @@ class meta(commands.Cog):
         description="changes bot prefix for server (admins only)",
     )
     async def set_prefix(self, ctx, prefix=None):
-        """prefix command. allows you to see current prefix, if no prefix is specified. prefix can only be changed by users with the Manage Guild permission. (and the bot owner)"""
+        """prefix command. allows you to see current prefix, if no prefix is specified. prefix can only be changed by users with the Manage Guild permission."""
         if ctx.guild is None:
             return await ctx.send_in_codeblock("prefix cannot be changed in dm's")
         if prefix is None:

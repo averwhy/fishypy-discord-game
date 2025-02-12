@@ -1,4 +1,5 @@
 # pylint: disable=wrong-import-order, missing-function-docstring, invalid-name, broad-except, too-many-branches, too-many-statements, too-many-locals,
+import discord
 from discord.ext import commands
 import humanize
 
@@ -10,7 +11,7 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_user_update(self, before, after):
+    async def on_user_update(self, before: discord.User, after: discord.User):
         if before.name != after.name:
             cursor = await self.bot.db.execute(
                 "SELECT * FROM f_users WHERE userid = ?", (after.id,)
@@ -60,7 +61,7 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
             self.bot.uses[ctx.author.id] = 1
 
     @commands.Cog.listener()
-    async def on_guild_join(self, guild):
+    async def on_guild_join(self, guild: discord.Guild):
         logchannel = self.bot.get_channel(761683999772377128)
         if logchannel is None:
             logchannel = await self.bot.fetch_channel(761683999772377128)
@@ -68,19 +69,18 @@ class events(commands.Cog, command_attrs=dict(hidden=True)):
 Guild:           {guild.name}
 ID:              {guild.id}
 Owner:           {str(guild.owner)}
-Members:         {guild.member_count}
+Members (bots):  {guild.member_count} ({len([m for m in guild.members if m.bot])})
 Boosters:        {len(guild.premium_subscribers)}
 Boost level:     {guild.premium_tier}
 Channels:        {len(guild.channels)}
 Roles:           {len(guild.roles)}
 Desc:            {(guild.description or 'None')}
-Created:         {humanize.precisedelta(guild.created_at)}
-Emoji limit:     {humanize.naturalsize(guild.emoji_limit)}```
+Created:         {humanize.precisedelta(guild.created_at.replace(tzinfo=None))}```
                 """
         await logchannel.send(msg)
 
     @commands.Cog.listener()
-    async def on_guild_remove(self, guild):
+    async def on_guild_remove(self, guild: discord.Guild):
         logchannel = self.bot.get_channel(761683999772377128)
         if logchannel is None:
             logchannel = await self.bot.fetch_channel(761683999772377128)
@@ -88,14 +88,13 @@ Emoji limit:     {humanize.naturalsize(guild.emoji_limit)}```
 Guild:           {guild.name}
 ID:              {guild.id}
 Owner:           {str(guild.owner)}
-Members:         {guild.member_count}
+Members (bots):  {guild.member_count} ({len([m for m in guild.members if m.bot])})
 Boosters:        {len(guild.premium_subscribers)}
 Boost level:     {guild.premium_tier}
 Channels:        {len(guild.channels)}
 Roles:           {len(guild.roles)}
 Desc:            {(guild.description or 'None')}
-Created:         {humanize.precisedelta(guild.created_at)}
-Emoji limit:     {humanize.naturalsize(guild.emoji_limit)}```
+Created:         {humanize.precisedelta(guild.created_at.replace(tzinfo=None))}```
                 """
         await logchannel.send(msg)
 
