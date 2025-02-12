@@ -23,7 +23,7 @@ class CollectionSource(menus.ListPageSource):
         print(entry)
         fish = await bot.get_fish(entry[0])
         splitname = fish.name.split()
-        fancy_rarity = await dbc.fish.fancy_rarity(fish.rarity)
+        fancy_rarity = await dbc.Fish.fancy_rarity(fish.rarity)
         embed = discord.Embed(
             title=f"{fish.name}",
             url=f"https://www.fishbase.de/Summary/{splitname[0]}-{splitname[1]}.html",

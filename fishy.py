@@ -7,7 +7,7 @@ import discord
 import math, random
 from discord.ext import commands
 import humanize
-
+import typing
 import objgraph
 import io
 from contextlib import redirect_stdout
@@ -50,34 +50,42 @@ class FishyContext(commands.Context):
             f"```{lang}\n{content}```", embed=embed, delete_after=delete_after
         )
 
-    async def random_fish(self, rod_level):
-        fish_range = rod_level * 3.163265306122449
-        fish_range = round(fish_range, 1)
-        thing = random.choices([True, False], weights=(0.1, 0.9), k=1)
-        if thing:
-            cur = await self.bot.db.execute(
-                "SELECT * FROM fishes WHERE fishlength <= ? AND fishlength >= ? ORDER BY RANDOM();",
-                (
-                    fish_range,
-                    math.floor(rod_level),
-                ),
-            )
-            data = await cur.fetchone()
-            if data is None:
-                cur = await self.bot.db.execute(
-                    "SELECT * FROM fishes WHERE fishlength <= ? ORDER BY RANDOM();",
-                    (fish_range,),
-                )
-                data = await cur.fetchone()
-            else:
-                pass
-        else:
-            cur = await self.bot.db.execute(
-                "SELECT * FROM fishes WHERE fishlength <= ? ORDER BY RANDOM();",
-                (fish_range,),
-            )
-            data = await cur.fetchone()
-        return dbc.fish(self.bot, data)
+    async def fish(self, rod_level):
+        max_length = round(rod_level * 3.163265306122449, 2)
+
+        cur = await self.bot.db.execute(
+            "SELECT oid, rarity, fishlength FROM fishes WHERE fishlength <= ?",
+            (max_length,)
+        )
+        fish_list = await cur.fetchall()
+        if not fish_list:
+            return None
+
+        weighted_rarities = []
+        total_weighted_rarity = 0.0
+        for fish in fish_list:
+            rarity = float(fish[1])
+            fishlength = float(fish[2])
+
+            weighted_rarity = (rarity * (1 + (rod_level * bot.RARITY_SCALING_FACTOR / 100))) + (fishlength * (1 + (rod_level * bot.LENGTH_SCALING_FACTOR / 100)) / max_length)
+            weighted_rarities.append(weighted_rarity)
+            total_weighted_rarity += weighted_rarity
+
+        probabilities = [w / total_weighted_rarity for w in weighted_rarities]
+        random_value = random.random()
+        cumulative_probability = 0.0
+        for i, probability in enumerate(probabilities):
+            cumulative_probability += probability
+            if random_value < cumulative_probability:
+                # Fetch the complete fish data using the oid
+                cur = await self.bot.db.execute("SELECT * FROM fishes WHERE oid = ?", (fish_list[i][0],))
+                fish_data = await cur.fetchone()
+                return dbc.Fish(self.bot, fish_data)
+
+        # Fallback
+        cur = await self.bot.db.execute("SELECT * FROM fishes WHERE oid = ?", (fish_list[-1][0],))
+        fish_data = await cur.fetchone()
+        return dbc.Fish(self.bot, fish_data)
 
 
 class FpyBot(commands.Bot):
@@ -174,7 +182,7 @@ class FpyBot(commands.Bot):
 
     async def usercheck(
         self, user
-    ):  # this function checks if the user exists in the DB
+    ) -> bool:  # this function checks if the user exists in the DB
         if isinstance(user, (discord.User, discord.Member)):
             user = user.id
         elif isinstance(user, int):
@@ -188,7 +196,7 @@ class FpyBot(commands.Bot):
             return False  # Not In database
         return True  # in database
 
-    async def get_player(self, user):
+    async def get_player(self, user) -> typing.Union[dbc.Player, None]:
         if isinstance(user, int):
             # looks like an user ID, lets convert
             userobj = self.get_user(user)
@@ -209,17 +217,17 @@ class FpyBot(commands.Bot):
         data = await c.fetchone()
         if data is None:
             return data
-        return dbc.player(self, data, userobj)
+        return dbc.Player(self, data, userobj)
 
-    async def get_fish(self, oid):
+    async def get_fish(self, oid) -> typing.Union[dbc.Fish, None]:
         """Gets a fish by OID, returns None if theres nothing matching."""
         c = await self.db.execute("SELECT * FROM fishes WHERE oid = ?", (oid,))
         data = await c.fetchone()
         if data is None:
             return data
-        return dbc.fish(self, data)
+        return dbc.Fish(self, data)
 
-    async def is_verified(self, user):
+    async def is_verified(self, user) -> typing.Union[bool, None]:
         if isinstance(user, int):
             # looks like an user ID, lets convert
             userobj = self.get_user(user)
@@ -241,6 +249,7 @@ class FpyBot(commands.Bot):
 
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["JISHAKU_HIDE"] = "True"
+os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 with open(os.environ['SECRETS'], "r") as t:
     TOKEN = t.readline()
 userid = "695328763960885269"
@@ -249,7 +258,7 @@ sinvite = "https://discord.com/api/oauth2/authorize?client_id=708428058822180874
 defaultprefix = "!"
 
 
-async def get_prefix(bot, message):
+async def get_prefix(bot, message) -> str:
     if message.guild is None:
         return ""
     return bot.prefixes.get(message.guild.id, defaultprefix)
@@ -280,6 +289,8 @@ bot.channel_blacklist = []
 bot.uses = {}
 bot.rodsbought = 0
 bot.last_backup_message = ""
+bot.RARITY_SCALING_FACTOR = 1.3
+bot.LENGTH_SCALING_FACTOR = 2
 bot.initial_extensions = [
     "jishaku",
     "cogs.jsk_override",

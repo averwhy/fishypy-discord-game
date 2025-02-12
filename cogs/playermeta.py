@@ -91,7 +91,7 @@ class playermeta(commands.Cog):
         if playeruser.trophy_oid not in [None, "none"]:
             playertrophy = await self.bot.get_fish(playeruser.trophy_oid)
             embed.set_image(url=playertrophy.image_url)
-            embed.color = (await dbc.fish.fancy_rarity(playertrophy.rarity))[1]
+            embed.color = (await dbc.Fish.fancy_rarity(playertrophy.rarity))[1]
             embed.add_field(
                 name=f"__Trophy: {playertrophy.name}__",
                 value=f"**Length:** {playertrophy.original_length} cm; **worth:** {playertrophy.coins(playeruser.trophy_rod_level)} coins",
@@ -106,7 +106,7 @@ class playermeta(commands.Cog):
     @commands.command(description="adds you to the database")
     async def start(self, ctx):  # adds users to DB so they can fish
         """registers you to the database.\nthis command exists so people know when they're giving their data to the bot.\nif you want your data deleted, please join the support server by doing !support"""
-        result = await dbc.player.create(self.bot, ctx.author)
+        result = await dbc.Player.create(self.bot, ctx.author)
         reactions = [
             "✅",
             "<:yesfish:810187479466115102>",
@@ -161,7 +161,7 @@ class playermeta(commands.Cog):
             )
         fish = await self.bot.get_fish(playeruser.trophy_oid)
         splitname = fish.name.split()
-        fancy_rarity = await dbc.fish.fancy_rarity(fish.rarity)
+        fancy_rarity = await dbc.Fish.fancy_rarity(fish.rarity)
         embed = discord.Embed(
             title=f"{fish.name}",
             url=f"https://www.fishbase.de/Summary/{splitname[0]}-{splitname[1]}.html",

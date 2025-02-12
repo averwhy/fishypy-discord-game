@@ -75,7 +75,7 @@ class game(commands.Cog):
         coins = 0
 
         while ctx.author.id in self.bot.autofishers and discord.utils.utcnow() < time_end:
-            fish = await ctx.random_fish(player.rod)
+            fish = await ctx.fish(player.rod)
             splitname = fish.name.split()
             caught_before = (
                 "" if (await player.check_collection(fish.oid)) else " (NEW)"
@@ -85,7 +85,7 @@ class game(commands.Cog):
                 if self.bot.coin_multiplier == 1.0
                 else f" **x{self.bot.coin_multiplier}**"
             )
-            fancy_rarity = await dbc.fish.fancy_rarity(fish.rarity)
+            fancy_rarity = await dbc.Fish.fancy_rarity(fish.rarity)
             coins_earned = round(
                 ((fish.coins(player.rod_level)) * self.bot.coin_multiplier), 3
             )
@@ -167,6 +167,7 @@ class game(commands.Cog):
         initial_embed.set_thumbnail(url=correct_emoji_url)
         msg = await ctx.send(embed=initial_embed)
         for r in list(threereactions.keys()):
+            await asyncio.sleep(0.3)
             await msg.add_reaction(r[0])
         await asyncio.sleep(self.bot.seconds_to_react)
         updatedmsg = await ctx.channel.fetch_message(msg.id)
@@ -181,7 +182,7 @@ class game(commands.Cog):
             return await self.stop_fishing(ctx, updatedmsg)
         await msg.add_reaction("✅")
         await asyncio.sleep(0.3)
-        fish = await ctx.random_fish(player.rod)
+        fish = await ctx.fish(player.rod)
         splitname = fish.name.split()
         caught_before = "" if (await player.check_collection(fish.oid)) else " (NEW)"
         coin_bonus = (
@@ -189,7 +190,7 @@ class game(commands.Cog):
             if self.bot.coin_multiplier == 1.0
             else f" **x{self.bot.coin_multiplier}**"
         )
-        fancy_rarity = await dbc.fish.fancy_rarity(fish.rarity)
+        fancy_rarity = await dbc.Fish.fancy_rarity(fish.rarity)
         embed = discord.Embed(
             title=f"{fish.name}{caught_before}",
             url=f"https://www.fishbase.de/Summary/{splitname[0]}-{splitname[1]}.html",

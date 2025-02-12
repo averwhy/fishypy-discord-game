@@ -10,7 +10,7 @@ RARE = 0.8
 COMMON = 0
 
 
-class fish:
+class Fish:
     def __init__(self, bot, data):
         self.bot = bot
         if data is None:
@@ -41,7 +41,7 @@ class fish:
         return round(math, 2)
 
 
-class player:
+class Player:
     def __init__(self, bot, data, user):
         self.bot = bot
         self.id = int(data[0])
@@ -334,12 +334,3 @@ class net:
         self.name = str(data[1])
         self.cost = int(data[2])
         self.minutes = self.mins = int(data[3])
-
-
-class server:
-    def __init__(self, bot):
-        self.bot = bot
-
-
-# this is empty, because servers are going bye bye for the time being
-# as an attempt towards a more classic and original fishy bot
