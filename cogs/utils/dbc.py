@@ -36,7 +36,7 @@ class Fish:
 
     def coins(self, rod_level):
         math = (
-            (self.rarity * (self.original_length * 2)) * (1 + (rod_level * 0.01))
+            (self.rarity * (self.original_length * 1.5)) * (1 + (rod_level * 0.01))
         ) * 0.4
         return round(math, 2)
 

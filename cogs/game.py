@@ -68,7 +68,7 @@ class game(commands.Cog):
             return True
         return False
 
-    async def do_autofishing(self, ctx, player):
+    async def do_autofishing(self, ctx, player: dbc.Player):
         playernet = await player.get_net()
         actual_start = discord.utils.utcnow()
         time_end = discord.utils.utcnow() + timedelta(minutes=playernet.minutes)
@@ -78,6 +78,9 @@ class game(commands.Cog):
         while (
             ctx.author.id in self.bot.autofishers and discord.utils.utcnow() < time_end
         ):
+            if random.random() < (0.73 + (player.rod * 0.0005)):
+                # 73% base chance to get a fish, plus up to ~26.9% (highest 99.9995%) chance based on rod level
+                return
             fish = await ctx.fish(player.rod)
             splitname = fish.name.split()
             caught_before = (

@@ -1,16 +1,18 @@
 # pylint: disable=wrong-import-order, missing-function-docstring, invalid-name, broad-except, too-many-branches, too-many-statements, too-many-locals,
 import random
 import discord
+from typing import Union
 from discord.ext import commands, menus
 from discord.ext.commands.cooldowns import BucketType
 from .utils import botchecks, botmenus, dbc
+from fishy import FpyBot
 
 OWNER_ID = 267410788996743168
 
 
 class playermeta(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: FpyBot = bot
 
     @commands.Cog.listener()
     async def on_user_update(self, before, after):
@@ -365,24 +367,30 @@ class playermeta(commands.Cog):
         )
         await pages.start(ctx)
 
-    # WIP ##
-    # @commands.cooldown(1, 10, BucketType.user)
-    # @commands.command(name="rod", description="changes your rod level")
-    # async def _rod(self, ctx, new_rod_lvl: int):
-    #     """changes your rod to any level that you've previously bought."""
-    #     playeruser = await self.bot.get_player(ctx.author)
-    #     if playeruser is None:
-    #         return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
+    @commands.cooldown(1, 10, BucketType.user)
+    @commands.command(name="rod", description="changes your rod level", disabled=True)
+    async def _rod(self, ctx, new_rod_lvl: int):
+        """changes your rod to any level that you've previously bought."""
+        playeruser = await self.bot.get_player(ctx.author)
+        if playeruser is None:
+            return await ctx.send_in_codeblock(f"you dont have a profile, use {ctx.prefix}start to get one")
+        c = await self.bot.db.execute(
+            "SELECT highestrod FROM f_users WHERE userid = ?", (ctx.author.id,)
+        )
+        highestrod = (await c.fetchone())[0]
+        if highestrod is None:
+            highestrod = (await playeruser.get_rod()).level
+            # they havent used this before, so we'll set their highest rod level to their current rod level
+            await self.bot.db.execute("UPDATE f_users SET highestrod = ? WHERE userid = ?",(highestrod, ctx.author.id,))
+            await self.bot.db.commit()
 
-    #     playerrod = await playeruser.get_rod()
-    #     maxlevel = playerrod.level
-    #     if new_rod_lvl > maxlevel:
-    #         return await ctx.send_in_codeblock(f"you can only set your rod level to the best rod you own  which is {maxlevel} ({playerrod.name}), or below!")
-
-    #     await self.bot.db.execute("UPDATE f_users SET rodlevel = ? WHERE userid = ?",(new_rod_lvl, ctx.author.id,))
-    #     await self.bot.db.commit()
-    #     return await ctx.send_in_codeblock(f"done! your rod is now the {playerrod.name} ({playeruser.rod_level})")
-
+        playerrod = await playeruser.get_rod()
+        if new_rod_lvl > highestrod:
+            return await ctx.send_in_codeblock(f"you can only set your rod level to the highest rod you own, which is {playerrod.name} ({highestrod}), or below!")
+        await self.bot.db.execute("UPDATE f_users SET rodlevel = ? WHERE userid = ?",(new_rod_lvl, ctx.author.id,))
+        await self.bot.db.commit()
+        newrod = dbc.rod(self.bot, await self.bot.db.execute("SELECT * FROM f_rods WHERE level = ?", (new_rod_lvl,)))
+        return await ctx.send_in_codeblock(f"done! your rod is now the {newrod.name} ({newrod.level})")
 
 async def setup(bot):
     await bot.add_cog(playermeta(bot))

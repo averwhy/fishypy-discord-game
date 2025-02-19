@@ -103,7 +103,7 @@ class shops(commands.Cog):
         data = await cur.fetchone()
         if data is None:
             return await ctx.reply_in_codeblock(
-                "you have the max rod level!", language="css"
+                "+ you have the max rod level! +", language="diff"
             )
 
         if playeruser.coins < data[2]:
@@ -113,6 +113,10 @@ class shops(commands.Cog):
 
         await self.bot.db.execute(
             "UPDATE f_users SET rodlevel = (rodlevel + 1) WHERE userid = ?",
+            (ctx.author.id,),
+        )
+        await self.bot.db.execute(
+            "UPDATE f_users SET highestrod = (highestrod + 1) WHERE userid = ?",
             (ctx.author.id,),
         )
         await self.bot.db.execute(

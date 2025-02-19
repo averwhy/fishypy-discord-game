@@ -17,7 +17,6 @@ thanks for adding me - i'm Fishy.py, a fishing game for Discord. To get started,
 if you need support in any way, feel free to reach out with !support```
 -# admins: to configure me, see <!help config>"""
 
-
 class meta(commands.Cog):
     def __init__(self, bot):
         self.bot: FpyBot = bot
@@ -31,11 +30,20 @@ class meta(commands.Cog):
             and channel.name in VALID_CHANNEL_NAMES_FOR_WELCOME_MESSAGE
         ][0]
         if best_channel is None:
-            return
+            best_channel = [
+                channel
+                for channel in guild.channels
+                if channel.permissions_for(guild.me).send_messages
+            ][0]
+        if best_channel is None:
+            return  # Rip
         tview = TrashView(timeout=300)
-        welcome_msg = await best_channel.send(WELCOME_MESSAGE, view=tview)
-        await tview.wait()
-        await welcome_msg.edit(view=None)
+        try:
+            welcome_msg = await best_channel.send(WELCOME_MESSAGE, view=tview)
+            await tview.wait()
+            await welcome_msg.edit(view=None)
+        except discord.Forbidden:
+            pass  # somehow our shit got messed up
 
     @commands.group(
         invoke_without_command=True,
@@ -250,11 +258,11 @@ Database Ping: {db_duration}ms```
         """.lower()
         await message.edit(content=msg)
 
-    @commands.cooldown(1, 10, BucketType.channel)
+    @commands.cooldown(1, 30, BucketType.channel)
     @commands.command(hidden=True)
     async def about(self, ctx):
         embed = discord.Embed(
-            title=f"**About Fishy.py**", description="", colour=discord.Colour(0x158B94)
+            title=f"**About Fishy.py**", description="", colour=discord.Colour(0x8a0677)
         )
         embed.set_author(name=f"Developed by @averwhy, original by @Deda")
         embed.set_footer(
@@ -263,20 +271,19 @@ Database Ping: {db_duration}ms```
         )
         embed.add_field(
             name="What is Fishy.py?",
-            value="Fishy.py is a fishing style game where you compete with other users or even guilds to have the best collection, or highest level, or fish. Originally created by Deda#9999 and written in JavaScript, Fishy was a huge success and is in over 1,000 servers. Sadly, it went offline as Deda could not host it anymore. So I revived the project and remade Fishy from scratch!",
+            value="Fishy.py is a fishing style game where you compete with other users or even guilds to have the best collection, or highest level, or fish. Originally created by @Deda and written in JavaScript, Fishy was a huge success and is in over 1,000 servers. Sadly, it went offline as Deda could not host it anymore. So I revived the project and remade Fishy from scratch!",
         )
         embed.add_field(
             name="How does it work?",
             value="Fishy.py has a database with more than 16,000 fishes, thanks to https://www.fishbase.org ! All of them have unique images and names. When you fish, one is randomly selected from the database. The better rod you have, the longer and rarer fish you can catch!\nIn terms of technicality, Fishy.py is made with the `discord.py` API, which is a wrapper for the Discord API.",
         )
         embed.add_field(
-            name="Have more questions? Feel free to join the support server and ask averwhy#3899!",
+            name="Have more questions? Feel free to join the support server and ask @averwhy!",
             value=f"The servers invite can be obtained via the `{ctx.prefix}support` command.",
             inline=False,
         )
         await ctx.send(embed=embed)
 
-    @commands.cooldown(1, 15, BucketType.guild)
     @commands.command(description="invite to the fishy.py support server")
     async def support(self, ctx):  # this sends the fishypy support server link
         em = discord.Embed(
@@ -298,7 +305,6 @@ Database Ping: {db_duration}ms```
             return await ctx.send(
                 "<https://discord.com/api/oauth2/authorize?client_id=708428058822180874&permissions=289856&scope=bot>"
             )
-
 
 async def setup(bot):
     await bot.add_cog(meta(bot))

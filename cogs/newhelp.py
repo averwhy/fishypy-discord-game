@@ -17,7 +17,6 @@ base_msg_group = f"""```md
 #__________COMMAND HELP__________#
 """
 
-
 class HelpCommand(commands.HelpCommand):
     def __init__(self):
         super().__init__(
@@ -36,6 +35,7 @@ class HelpCommand(commands.HelpCommand):
         new_msg = base_msg
         for cog, cmds in mapping.items():
             cmds = await self.filter_commands(cmds, sort=False)
+            # cmds.sort(key=lambda cmd: cmd.cog_name == "game", reverse=True) #TODO: make work
             for cmd in cmds:
                 if isinstance(cmd, Group):
                     _ = [f"{sc.name}|" for sc in cmd.commands]

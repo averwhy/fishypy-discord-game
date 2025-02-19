@@ -13,6 +13,7 @@ import io
 from contextlib import redirect_stdout
 from cogs.utils import dbc, botchecks
 
+
 # BOT##########################################################################################################
 class FishyContext(commands.Context):
     # self = ctx
@@ -312,9 +313,11 @@ bot.initial_extensions = [
     "cogs.playermeta",
 ]
 
+
 async def startup():
     async with bot:
         await bot.start(TOKEN)
+
 
 ############################################################################################################################################################################################
 from discord.ext.commands.errors import CommandNotFound, CommandOnCooldown, NotOwner
@@ -398,7 +401,7 @@ async def on_ready():
     print(bot.user.id)
     print("")
     print(bot.user.name, bot.version, "is connected and running")
-    print(f"Time since start: {humanize.precisedelta(bot.launch_time)}")
+    print(f"Time since start: {humanize.precisedelta(bot.launch_time.replace(tzinfo=None))}")
     print("-------------------------------------------------------")
 
 
